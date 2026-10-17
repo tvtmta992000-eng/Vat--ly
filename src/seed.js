@@ -20,8 +20,8 @@ async function ensureAdmin() {
 
 // Nhập chương/bài/câu hỏi. Chương trùng (cùng cấp + tên) được dùng lại, bài trùng slug thì bỏ qua,
 // nên chạy lại nhiều lần không tạo bản sao.
-async function importChapters(chapters) {
-  const stats = { chapters: 0, lessons: 0, questions: 0, skipped: [] };
+async function importChapters(chapters, { update = false } = {}) {
+  const stats = { chapters: 0, lessons: 0, questions: 0, updated: 0, skipped: [] };
   for (const chapter of chapters) {
     let row = await db.one('SELECT id FROM chapters WHERE level = ? AND title = ?', [chapter.level, chapter.title]);
     if (!row) {
@@ -34,21 +34,35 @@ async function importChapters(chapters) {
     }
 
     for (const [lessonIndex, lesson] of chapter.lessons.entries()) {
-      if (await db.one('SELECT id FROM lessons WHERE slug = ?', [lesson.slug])) {
+      const existing = await db.one('SELECT id FROM lessons WHERE slug = ?', [lesson.slug]);
+      let lessonId;
+      if (existing && !update) {
         stats.skipped.push(lesson.slug);
         continue;
+      } else if (existing) {
+        // Chế độ cập nhật: ghi đè nội dung bài và thay toàn bộ câu hỏi (điểm và tiến độ của học sinh được giữ).
+        await db.query(
+          `UPDATE lessons SET chapter_id = ?, title = ?, summary = ?, content_md = ?, simulation = ?, position = ?
+            WHERE id = ?`,
+          [row.id, lesson.title, lesson.summary, lesson.content.trim(), lesson.simulation || null, lessonIndex, existing.id]
+        );
+        await db.query('DELETE FROM questions WHERE lesson_id = ?', [existing.id]);
+        lessonId = existing.id;
+        stats.updated += 1;
+      } else {
+        const lessonResult = await db.query(
+          `INSERT INTO lessons (chapter_id, title, slug, summary, content_md, simulation, position)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [row.id, lesson.title, lesson.slug, lesson.summary, lesson.content.trim(), lesson.simulation || null, lessonIndex]
+        );
+        lessonId = lessonResult.insertId;
+        stats.lessons += 1;
       }
-      const lessonResult = await db.query(
-        `INSERT INTO lessons (chapter_id, title, slug, summary, content_md, simulation, position)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [row.id, lesson.title, lesson.slug, lesson.summary, lesson.content.trim(), lesson.simulation || null, lessonIndex]
-      );
-      stats.lessons += 1;
       for (const [qIndex, q] of (lesson.questions || []).entries()) {
         await db.query(
           `INSERT INTO questions (lesson_id, prompt_md, options_json, correct_index, explanation_md, position)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [lessonResult.insertId, q.prompt, JSON.stringify(q.options), q.answer, q.explanation || null, qIndex]
+          [lessonId, q.prompt, JSON.stringify(q.options), q.answer, q.explanation || null, qIndex]
         );
         stats.questions += 1;
       }

@@ -184,6 +184,7 @@ ${NOTE_ORIGINAL}
       {
         title: 'Khí lí tưởng – Kiến thức trọng tâm',
         slug: 'vl12-c2-khi-li-tuong-kien-thuc',
+        simulation: 'gas',
         summary: 'Định luật Boyle, Charles, Gay-Lussac, phương trình trạng thái, pV = nRT, động năng phân tử, đồ thị.',
         content: r`
 Chương có nhiều câu tính nhanh và câu đọc đồ thị nhất ở lớp 12. **Sai lầm phổ biến nhất là quên đổi °C sang K.**
@@ -350,6 +351,7 @@ ${NOTE_ORIGINAL}
       {
         title: 'Từ trường và cảm ứng điện từ – Kiến thức trọng tâm',
         slug: 'vl12-c3-tu-truong-kien-thuc',
+        simulation: 'induction',
         summary: 'Lực từ, từ thông, định luật Faraday – Lenz, dòng điện xoay chiều, máy biến áp, hao phí truyền tải.',
         content: r`
 Chương dài nhất của lớp 12, gồm lực từ, cảm ứng điện từ, dòng điện xoay chiều, máy biến áp và truyền tải điện năng. Phần lớn câu điện trong đề thi nằm ở chương này.

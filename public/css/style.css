@@ -638,3 +638,35 @@ a.card:hover .level-meta .icon { transform: translateX(3px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- Mô phỏng: trang danh mục ---------- */
+.section-more { margin-top: var(--space-5); display: flex; justify-content: center; }
+.chip-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+.chip-link {
+  display: inline-flex; align-items: center; gap: var(--space-2); min-height: 40px; padding: 6px 14px;
+  border-radius: 999px; border: 1px solid var(--color-border-strong); background: var(--color-surface);
+  font: 600 0.875rem/1.2 var(--font-heading); color: var(--color-fg-soft); text-decoration: none;
+}
+.chip-link:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-soft); }
+.chip-link span { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 999px; background: var(--color-surface-alt); font-size: 0.75rem; }
+.sim-group + .sim-group { margin-top: var(--space-7); }
+.sim-group-title { font-size: 1.35rem; margin-bottom: var(--space-4); }
+.sim-card-full { display: flex; flex-direction: column; }
+.sim-card-full > p { margin-bottom: var(--space-3); }
+.param-list { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 var(--space-3); padding: 0; }
+.param-list li { padding: 3px 10px; border-radius: 999px; background: var(--color-primary-soft); color: var(--color-primary); font: 600 0.75rem/1.5 var(--font-heading); }
+.card p.sim-apps { font-size: 0.875rem; color: var(--color-fg-soft); flex: 1; }
+.sim-apps strong { color: var(--color-fg); }
+.sim-open { align-self: flex-start; margin-top: var(--space-2); }
+.sim-title-icon { width: 52px; height: 52px; flex-shrink: 0; margin-top: 6px; background: #ffedd5; color: var(--color-accent-hover); }
+.sim-title-icon .icon { width: 26px; height: 26px; }
+.sim-info { margin-top: var(--space-5); }
+.sim-info .card p { margin: 0; }
+.sim-info .simple-list .icon { width: 18px; height: 18px; color: var(--color-primary); }
+
+/* ---------- Mô phỏng: chi tiết ---------- */
+.sim-hint { margin: 0; padding: var(--space-2) var(--space-3); font-size: 0.85rem; color: var(--color-muted); border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.sim-note { margin: 0; font-size: 0.85rem; color: var(--color-muted); }
+.sim-readout dd.readout-text { font: 600 0.9rem/1.4 var(--font-body); }
+.slider input:disabled { opacity: 0.4; cursor: not-allowed; }
+.segmented { display: flex; }

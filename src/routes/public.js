@@ -1,7 +1,9 @@
 const express = require('express');
 const db = require('../db');
 const { LEVELS, getLevel } = require('../levels');
-const { SIMULATIONS, getSimulation } = require('../simulations');
+const { SIMULATIONS, getSimulation, groupedSimulations } = require('../simulations');
+
+const FEATURED_SIMULATIONS = ['collision', 'interference', 'gas', 'induction', 'lens', 'resonance'].map(getSimulation);
 const { render } = require('../lib/markdown');
 const { getLessonBySlug, getQuestions, getLevelTree, getNeighbours } = require('../lib/content');
 
@@ -28,6 +30,7 @@ router.get('/', async (req, res) => {
     latest,
     stats,
     simulations: SIMULATIONS,
+    featuredSimulations: FEATURED_SIMULATIONS,
   });
 });
 
@@ -84,7 +87,7 @@ async function renderLesson(req, res, lesson, quizResult = null) {
 }
 
 router.get('/mo-phong', (req, res) => {
-  res.render('simulations', { title: 'Mô phỏng tương tác', simulations: SIMULATIONS });
+  res.render('simulations', { title: 'Mô phỏng tương tác', groups: groupedSimulations(), total: SIMULATIONS.length });
 });
 
 router.get('/mo-phong/:key', async (req, res, next) => {

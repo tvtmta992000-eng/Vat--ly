@@ -1,0 +1,15 @@
+<div class="sim-controls">
+  <label class="slider"><span>Nhiệt độ $T$</span> <output data-for="temp">300 K</output>
+    <input type="range" name="temp" min="100" max="1000" step="10" value="300"></label>
+  <label class="slider"><span>Thể tích $V$ (đẩy pít-tông)</span> <output data-for="vol">10,0 lít</output>
+    <input type="range" name="vol" min="3" max="10" step="0.1" value="10"></label>
+  <label class="slider"><span>Số phân tử (mỗi chấm ≈ 10²² phân tử)</span> <output data-for="count">80</output>
+    <input type="range" name="count" min="20" max="200" step="10" value="80"></label>
+</div>
+<dl class="sim-readout">
+  <div><dt>Áp suất đo được</dt><dd data-out="pmeas">—</dd></div>
+  <div><dt>Áp suất lí thuyết $p = \frac{N}{V}kT$</dt><dd data-out="ptheory">—</dd></div>
+  <div><dt>Tốc độ trung bình phân tử</dt><dd data-out="speed">—</dd></div>
+  <div><dt>$pV/T$</dt><dd data-out="pvt">—</dd></div>
+</dl>
+<%- include('../partials/sim-buttons', { label: 'Tạm dừng' }) %>

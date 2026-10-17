@@ -1,0 +1,21 @@
+<div class="sim-controls">
+  <div class="segmented" role="radiogroup" aria-label="Số nguồn sóng">
+    <label><input type="radio" name="sources" value="1"><span>1 nguồn</span></label>
+    <label><input type="radio" name="sources" value="2" checked><span>2 nguồn</span></label>
+  </div>
+  <label class="slider"><span>Tần số $f$</span> <output data-for="freq">10 Hz</output>
+    <input type="range" name="freq" min="4" max="25" step="1" value="10"></label>
+  <label class="slider"><span>Khoảng cách hai nguồn $S_1S_2$</span> <output data-for="dist">10 cm</output>
+    <input type="range" name="dist" min="2" max="16" step="0.5" value="10"></label>
+  <label class="slider"><span>Biên độ</span> <output data-for="amp">1,0 cm</output>
+    <input type="range" name="amp" min="0.2" max="2" step="0.1" value="1"></label>
+  <label class="check"><input type="checkbox" name="lines" checked> Hiện đường cực đại (liền) và cực tiểu (đứt)</label>
+  <p class="sim-note">Tốc độ truyền sóng trên mặt nước: $v = 40$ cm/s.</p>
+</div>
+<dl class="sim-readout">
+  <div><dt>Bước sóng $\lambda = v/f$</dt><dd data-out="lambda">—</dd></div>
+  <div><dt>Tỉ số $S_1S_2/\lambda$</dt><dd data-out="ratio">—</dd></div>
+  <div><dt>Số cực đại trên $S_1S_2$</dt><dd data-out="maxima">—</dd></div>
+  <div><dt>Số cực tiểu trên $S_1S_2$</dt><dd data-out="minima">—</dd></div>
+</dl>
+<%- include('../partials/sim-buttons', { label: 'Tạm dừng' }) %>

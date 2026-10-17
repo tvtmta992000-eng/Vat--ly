@@ -1,6 +1,12 @@
 (function () {
   'use strict';
 
+  if (window.CanvasRenderingContext2D && !CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h) {
+      this.rect(x, y, w, h);
+    };
+  }
+
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var KATEX_OPTIONS = {

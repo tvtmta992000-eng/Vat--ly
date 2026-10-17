@@ -6,7 +6,7 @@ Website học tập môn Vật lý cho học sinh THCS, THPT, ôn thi ĐH/HSG v�
 
 - Bài giảng theo cấp học → chương → bài, công thức hiển thị bằng KaTeX
 - Trắc nghiệm chấm điểm ngay, hiện lời giải từng câu
-- 3 mô phỏng tương tác: con lắc đơn, chuyển động ném xiên, định luật Ohm
+- 10 mô phỏng tương tác: ném xiên, va chạm, mặt phẳng nghiêng, con lắc đơn, cộng hưởng, giao thoa sóng, khí lí tưởng, định luật Ohm, cảm ứng điện từ, thấu kính
 - Tài khoản học sinh, lưu điểm và tiến độ (đạt ≥ 80% tự đánh dấu hoàn thành bài)
 - Trang quản trị cho giáo viên: soạn bài bằng Markdown + LaTeX có xem trước trực tiếp, quản lý chương, câu hỏi, phân quyền người dùng
 
@@ -131,15 +131,20 @@ sudo bash /var/www/vatly/deploy/update.sh
 
 ### Nhập cả bộ tài liệu từ file
 
-Nội dung soạn sẵn nằm trong thư mục `content/` (ví dụ `content/vat-ly-12.js`). Nhập lên website:
+Nội dung soạn sẵn nằm trong thư mục `content/` (`vat-ly-10.js`, `vat-ly-11.js`, `vat-ly-12.js`). Nhập lên website:
 
 ```bash
 # Trên VPS
-cd /var/www/vatly && sudo -u vatly npm run import -- content/vat-ly-12.js
-# Thêm --xoa-bai-mau để xoá 6 bài mẫu ban đầu
+cd /var/www/vatly && sudo -u vatly npm run import -- content/vat-ly-10.js content/vat-ly-11.js content/vat-ly-12.js
 ```
 
-Chạy lại nhiều lần không tạo bài trùng (bài đã có slug sẽ được bỏ qua).
+| Tuỳ chọn | Tác dụng |
+|---|---|
+| (không có) | Chỉ thêm bài mới, bỏ qua bài đã có |
+| `--cap-nhat` | Ghi đè bài đã có (cùng slug) bằng nội dung trong file; điểm và tiến độ học sinh được giữ |
+| `--xoa-bai-mau` | Xoá 6 bài mẫu ban đầu |
+
+> Dùng `--cap-nhat` cẩn thận: chỉnh sửa trên trang Quản trị đối với các bài đó sẽ bị thay bằng nội dung trong file.
 
 ## Cấu trúc thư mục
 

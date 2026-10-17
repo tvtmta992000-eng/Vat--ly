@@ -1,0 +1,24 @@
+<div class="sim-controls">
+  <label class="slider"><span>Khối lượng xe 1 ($m_1$)</span> <output data-for="m1">2,0 kg</output>
+    <input type="range" name="m1" min="0.5" max="5" step="0.5" value="2"></label>
+  <label class="slider"><span>Vận tốc xe 1 ($v_1$)</span> <output data-for="v1">4,0 m/s</output>
+    <input type="range" name="v1" min="-5" max="5" step="0.5" value="4"></label>
+  <label class="slider"><span>Khối lượng xe 2 ($m_2$)</span> <output data-for="m2">2,0 kg</output>
+    <input type="range" name="m2" min="0.5" max="5" step="0.5" value="2"></label>
+  <label class="slider"><span>Vận tốc xe 2 ($v_2$)</span> <output data-for="v2">0,0 m/s</output>
+    <input type="range" name="v2" min="-5" max="5" step="0.5" value="0"></label>
+  <label class="slider"><span>Hệ số phục hồi $e$</span> <output data-for="e">1,00</output>
+    <input type="range" name="e" min="0" max="1" step="0.05" value="1"></label>
+  <div class="preset-row" role="group" aria-label="Kiểu va chạm">
+    <button type="button" class="chip-btn" data-e="1">Đàn hồi (e = 1)</button>
+    <button type="button" class="chip-btn" data-e="0.5">Không đàn hồi (e = 0,5)</button>
+    <button type="button" class="chip-btn" data-e="0">Mềm – dính nhau (e = 0)</button>
+  </div>
+</div>
+<dl class="sim-readout">
+  <div><dt>Vận tốc sau $v_1'$</dt><dd data-out="v1p">—</dd></div>
+  <div><dt>Vận tốc sau $v_2'$</dt><dd data-out="v2p">—</dd></div>
+  <div><dt>Động lượng trước → sau</dt><dd data-out="p">—</dd></div>
+  <div><dt>Động năng trước → sau</dt><dd data-out="w">—</dd></div>
+</dl>
+<%- include('../partials/sim-buttons', { label: 'Chạy' }) %>

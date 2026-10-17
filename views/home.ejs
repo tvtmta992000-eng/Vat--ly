@@ -106,13 +106,16 @@
       <p class="muted">Không cần dụng cụ — chạy ngay trên trình duyệt, kể cả điện thoại.</p>
     </div>
     <div class="grid grid-3">
-      <% simulations.forEach(function (s) { %>
+      <% featuredSimulations.forEach(function (s) { %>
         <a class="card sim-card" href="/mo-phong/<%= s.key %>">
-          <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-<%= s.key === 'circuit' ? 'zap' : s.key %>"/></svg></span>
+          <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-<%= s.icon %>"/></svg></span>
           <h3><%= s.title %></h3>
           <p><%= s.description %></p>
         </a>
       <% }) %>
+    </div>
+    <div class="section-more">
+      <a class="btn btn-secondary" href="/mo-phong">Xem tất cả <%= simulations.length %> mô phỏng<svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
     </div>
   </div>
 </section>

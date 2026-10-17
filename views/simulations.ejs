@@ -2,22 +2,34 @@
 <section class="page-head">
   <div class="container">
     <nav class="breadcrumb" aria-label="Đường dẫn"><a href="/">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Mô phỏng</span></nav>
-    <h1>Mô phỏng tương tác</h1>
-    <p class="lead">Thay đổi thông số, quan sát hiện tượng và kiểm chứng công thức ngay trên trình duyệt.</p>
+    <h1>Phòng thí nghiệm ảo</h1>
+    <p class="lead"><%= total %> mô phỏng tương tác: thay đổi thông số, quan sát hiện tượng và kiểm chứng công thức ngay trên trình duyệt, kể cả điện thoại.</p>
+    <nav class="chip-nav" aria-label="Chủ đề mô phỏng">
+      <% groups.forEach(function (g) { %><a class="chip-link" href="#<%= g.key %>"><%= g.name %> <span><%= g.items.length %></span></a><% }) %>
+    </nav>
   </div>
 </section>
 <section class="section section-tight">
   <div class="container">
-    <div class="grid grid-3">
-      <% simulations.forEach(function (s) { %>
-        <a class="card sim-card" href="/mo-phong/<%= s.key %>">
-          <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-<%= s.key === 'circuit' ? 'zap' : s.key %>"/></svg></span>
-          <h2 class="h3"><%= s.title %></h2>
-          <p><%= s.description %></p>
-          <span class="level-meta">Mở mô phỏng <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
-        </a>
-      <% }) %>
-    </div>
+    <% groups.forEach(function (g) { %>
+      <section class="sim-group" id="<%= g.key %>" aria-labelledby="h-<%= g.key %>">
+        <h2 id="h-<%= g.key %>" class="sim-group-title"><%= g.name %></h2>
+        <div class="grid grid-3">
+          <% g.items.forEach(function (s) { %>
+            <article class="card sim-card sim-card-full">
+              <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-<%= s.icon %>"/></svg></span>
+              <h3><%= s.title %></h3>
+              <p><%= s.description %></p>
+              <ul class="param-list" aria-label="Thông số thay đổi được">
+                <% s.params.forEach(function (param) { %><li><%= param %></li><% }) %>
+              </ul>
+              <p class="sim-apps"><strong>Ứng dụng:</strong> <%= s.applications %></p>
+              <a class="btn btn-primary btn-sm sim-open" href="/mo-phong/<%= s.key %>">Mở mô phỏng<svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+            </article>
+          <% }) %>
+        </div>
+      </section>
+    <% }) %>
   </div>
 </section>
 <%- include('partials/foot') %>

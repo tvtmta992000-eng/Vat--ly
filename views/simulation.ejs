@@ -2,21 +2,34 @@
 <section class="page-head">
   <div class="container">
     <nav class="breadcrumb" aria-label="Đường dẫn"><a href="/">Trang chủ</a><span aria-hidden="true">/</span><a href="/mo-phong">Mô phỏng</a><span aria-hidden="true">/</span><span aria-current="page"><%= simulation.title %></span></nav>
-    <h1><%= simulation.title %></h1>
-    <p class="lead"><%= simulation.description %></p>
+    <div class="page-title-row">
+      <span class="feature-icon sim-title-icon" aria-hidden="true"><svg class="icon"><use href="#i-<%= simulation.icon %>"/></svg></span>
+      <div>
+        <h1><%= simulation.title %></h1>
+        <p class="lead"><%= simulation.description %></p>
+      </div>
+    </div>
   </div>
 </section>
 <section class="section section-tight">
   <div class="container">
     <%- include('partials/sim', { sim: simulation }) %>
-    <% if (related.length) { %>
-      <div class="related">
-        <h2 class="h3">Bài học liên quan</h2>
-        <ul>
-          <% related.forEach(function (l) { %><li><a href="/bai/<%= l.slug %>"><%= l.title %></a></li><% }) %>
-        </ul>
+    <div class="grid grid-2 sim-info">
+      <div class="card">
+        <h2 class="h3">Ứng dụng thực tế</h2>
+        <p><%= simulation.applications %></p>
       </div>
-    <% } %>
+      <div class="card">
+        <h2 class="h3">Bài học liên quan</h2>
+        <% if (related.length) { %>
+          <ul class="simple-list">
+            <% related.forEach(function (l) { %><li><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><a href="/bai/<%= l.slug %>"><%= l.title %></a></li><% }) %>
+          </ul>
+        <% } else { %>
+          <p>Chưa có bài học gắn với mô phỏng này.</p>
+        <% } %>
+      </div>
+    </div>
   </div>
 </section>
 <%- include('partials/foot') %>

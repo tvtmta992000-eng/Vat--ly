@@ -1,0 +1,20 @@
+  <div class="sim-controls">
+    <label class="slider"><span>Chiều dài dây</span> <output data-for="length">1,00 m</output>
+      <input type="range" name="length" min="0.2" max="2.5" step="0.05" value="1"></label>
+    <label class="slider"><span>Gia tốc trọng trường g</span> <output data-for="gravity">9,81 m/s²</output>
+      <input type="range" name="gravity" min="1.6" max="24.8" step="0.01" value="9.81"></label>
+    <label class="slider"><span>Biên độ góc</span> <output data-for="angle">10°</output>
+      <input type="range" name="angle" min="2" max="60" step="1" value="10"></label>
+    <div class="preset-row" role="group" aria-label="Chọn hành tinh">
+      <button type="button" class="chip-btn" data-gravity="9.81">Trái Đất</button>
+      <button type="button" class="chip-btn" data-gravity="1.62">Mặt Trăng</button>
+      <button type="button" class="chip-btn" data-gravity="3.71">Sao Hoả</button>
+      <button type="button" class="chip-btn" data-gravity="24.79">Sao Mộc</button>
+    </div>
+  </div>
+  <dl class="sim-readout">
+    <div><dt>Chu kì lý thuyết $T = 2\pi\sqrt{l/g}$</dt><dd data-out="theory">—</dd></div>
+    <div><dt>Chu kì đo được</dt><dd data-out="measured">—</dd></div>
+    <div><dt>Số dao động</dt><dd data-out="count">0</dd></div>
+  </dl>
+<%- include('../partials/sim-buttons', { label: 'Chạy' }) %>

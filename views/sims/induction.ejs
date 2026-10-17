@@ -1,0 +1,19 @@
+<div class="sim-controls">
+  <label class="slider"><span>Số vòng dây $N$</span> <output data-for="turns">5 vòng</output>
+    <input type="range" name="turns" min="1" max="10" step="1" value="5"></label>
+  <label class="slider"><span>Tốc độ khi chạy tự động</span> <output data-for="speed">Vừa</output>
+    <input type="range" name="speed" min="0.3" max="3" step="0.1" value="1"></label>
+  <label class="slider"><span>Vị trí nam châm</span> <output data-for="pos">—</output>
+    <input type="range" name="pos" min="0" max="1" step="0.005" value="0.12"></label>
+  <div class="segmented" role="radiogroup" aria-label="Cực nam châm hướng vào cuộn dây">
+    <label><input type="radio" name="pole" value="N" checked><span>Cực N hướng vào cuộn</span></label>
+    <label><input type="radio" name="pole" value="S"><span>Cực S hướng vào cuộn</span></label>
+  </div>
+</div>
+<dl class="sim-readout">
+  <div><dt>Từ thông $\Phi$ (tương đối)</dt><dd data-out="flux">—</dd></div>
+  <div><dt>Suất điện động $e$</dt><dd data-out="emf">—</dd></div>
+  <div><dt>Chiều dòng điện (nhìn từ nam châm)</dt><dd data-out="dir">—</dd></div>
+  <div><dt>Định luật Lenz</dt><dd data-out="lenz" class="readout-text">—</dd></div>
+</dl>
+<%- include('../partials/sim-buttons', { label: 'Tự động' }) %>

@@ -1,0 +1,21 @@
+  <div class="sim-controls">
+    <label class="slider"><span>Suất điện động $\mathcal{E}$</span> <output data-for="emf">12 V</output>
+      <input type="range" name="emf" min="1" max="24" step="0.5" value="12"></label>
+    <label class="slider"><span>Điện trở trong r</span> <output data-for="internal">1 Ω</output>
+      <input type="range" name="internal" min="0" max="5" step="0.1" value="1"></label>
+    <label class="slider"><span>Điện trở $R_1$</span> <output data-for="r1">6 Ω</output>
+      <input type="range" name="r1" min="1" max="30" step="1" value="6"></label>
+    <label class="slider"><span>Điện trở $R_2$</span> <output data-for="r2">3 Ω</output>
+      <input type="range" name="r2" min="1" max="30" step="1" value="3"></label>
+    <div class="segmented" role="radiogroup" aria-label="Cách mắc R1 và R2">
+      <label><input type="radio" name="mode" value="series" checked><span>Nối tiếp</span></label>
+      <label><input type="radio" name="mode" value="parallel"><span>Song song</span></label>
+    </div>
+  </div>
+  <dl class="sim-readout">
+    <div><dt>Điện trở mạch ngoài R</dt><dd data-out="rtotal">—</dd></div>
+    <div><dt>Cường độ dòng điện I</dt><dd data-out="current">—</dd></div>
+    <div><dt>Hiệu điện thế mạch ngoài U</dt><dd data-out="voltage">—</dd></div>
+    <div><dt>Công suất mạch ngoài P</dt><dd data-out="power">—</dd></div>
+  </dl>
+<%- include('../partials/sim-buttons', { label: 'Chạy' }) %>

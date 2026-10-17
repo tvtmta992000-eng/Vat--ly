@@ -1,0 +1,20 @@
+<div class="sim-controls">
+  <div class="segmented" role="radiogroup" aria-label="Loại thấu kính">
+    <label><input type="radio" name="type" value="converging" checked><span>Hội tụ</span></label>
+    <label><input type="radio" name="type" value="diverging"><span>Phân kì</span></label>
+  </div>
+  <label class="slider"><span>Tiêu cự $|f|$</span> <output data-for="focal">12 cm</output>
+    <input type="range" name="focal" min="5" max="25" step="0.5" value="12"></label>
+  <label class="slider"><span>Khoảng cách vật $d$</span> <output data-for="dist">30 cm</output>
+    <input type="range" name="dist" min="2" max="60" step="0.5" value="30"></label>
+  <label class="slider"><span>Chiều cao vật $h$</span> <output data-for="height">3,0 cm</output>
+    <input type="range" name="height" min="1" max="6" step="0.5" value="3"></label>
+</div>
+<dl class="sim-readout">
+  <div><dt>Khoảng cách ảnh $d'$</dt><dd data-out="dimg">—</dd></div>
+  <div><dt>Số phóng đại $k = -d'/d$</dt><dd data-out="mag">—</dd></div>
+  <div><dt>Chiều cao ảnh</dt><dd data-out="himg">—</dd></div>
+  <div><dt>Tính chất ảnh</dt><dd data-out="nature" class="readout-text">—</dd></div>
+</dl>
+<p class="sim-note">Công thức thấu kính: $\dfrac{1}{f} = \dfrac{1}{d} + \dfrac{1}{d'}$ (thấu kính phân kì có $f < 0$; $d' < 0$ là ảnh ảo).</p>
+<%- include('../partials/sim-buttons', {}) %>
