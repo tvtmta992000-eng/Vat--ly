@@ -35,6 +35,20 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-$(random 6)}"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# VPS mới tạo thường đang tự cài bản cập nhật bảo mật (unattended-upgrades) và giữ khoá apt.
+# Cho mọi lệnh apt chờ khoá tối đa 30 phút thay vì báo lỗi sau 2 phút.
+echo 'DPkg::Lock::Timeout "1800";' > /etc/apt/apt.conf.d/99vatly-wait-lock
+if pgrep -f '/usr/bin/unattended-upgrade' >/dev/null; then
+  step "Ubuntu đang tự cài bản cập nhật bảo mật — đang đợi xong (có thể mất 5–15 phút)"
+  waited=0
+  while pgrep -f '/usr/bin/unattended-upgrade' >/dev/null && [ "$waited" -lt 1800 ]; do
+    printf '.'
+    sleep 10
+    waited=$((waited + 10))
+  done
+  echo
+fi
+
 step "Cập nhật hệ thống và cài gói cần thiết"
 apt-get update -y
 apt-get install -y curl git nginx mariadb-server openssl ufw ca-certificates
