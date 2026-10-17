@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
-const { safeNext } = require('../lib/middleware');
+const { safeNext, requireLogin } = require('../lib/middleware');
 
 const router = express.Router();
 
@@ -83,6 +83,27 @@ router.post('/dang-ky', authLimiter, async (req, res) => {
   await logIn(req, { id: result.insertId });
   req.flash('success', 'Tạo tài khoản thành công. Chúc bạn học tốt!');
   res.redirect('/');
+});
+
+router.get('/doi-mat-khau', requireLogin, (req, res) => {
+  res.render('auth/change-password', { title: 'Đổi mật khẩu', errors: {} });
+});
+
+router.post('/doi-mat-khau', requireLogin, authLimiter, async (req, res) => {
+  const current = String(req.body.current_password || '');
+  const password = String(req.body.password || '');
+  const errors = {};
+  const row = await db.one('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+  if (!row || !(await bcrypt.compare(current, row.password_hash))) errors.current_password = 'Mật khẩu hiện tại không đúng.';
+  if (password.length < 8) errors.password = 'Mật khẩu mới cần ít nhất 8 ký tự.';
+  if (password !== req.body.password_confirm) errors.password_confirm = 'Mật khẩu nhập lại không khớp.';
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).render('auth/change-password', { title: 'Đổi mật khẩu', errors });
+  }
+  const hash = await bcrypt.hash(password, 12);
+  await db.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
+  req.flash('success', 'Đã đổi mật khẩu thành công.');
+  res.redirect('/tien-do');
 });
 
 router.post('/dang-xuat', (req, res, next) => {
