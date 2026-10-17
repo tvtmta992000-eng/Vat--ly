@@ -66,6 +66,20 @@ app.get('/vendor/fonts.css', (req, res) => {
 app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 app.use(express.json({ limit: '1mb' }));
 
+// Giá trị mặc định cho giao diện, để trang lỗi vẫn hiển thị được kể cả khi session/DB gặp sự cố.
+app.use((req, res, next) => {
+  Object.assign(res.locals, {
+    siteName: config.siteName,
+    levels: LEVELS,
+    currentPath: req.path,
+    user: null,
+    isStaff: false,
+    flash: null,
+    csrfToken: '',
+  });
+  next();
+});
+
 app.use(
   session({
     name: 'vl24.sid',
@@ -76,7 +90,8 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: config.isProduction,
+      // 'auto': chỉ bật Secure khi truy cập qua HTTPS (sau Nginx), để vẫn đăng nhập được qua IP/HTTP.
+      secure: config.isProduction ? 'auto' : false,
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
   })
@@ -89,9 +104,6 @@ app.use(async (req, res, next) => {
     if (!req.user) delete req.session.userId;
   }
   res.locals.user = req.user;
-  res.locals.siteName = config.siteName;
-  res.locals.levels = LEVELS;
-  res.locals.currentPath = req.path;
   res.locals.isStaff = Boolean(req.user && ['teacher', 'admin'].includes(req.user.role));
   next();
 });
@@ -110,7 +122,15 @@ app.use((req, res) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).render('error', { title: 'Đã có lỗi xảy ra', message: 'Máy chủ gặp sự cố. Vui lòng thử lại sau.' });
+  if (res.headersSent) return next(err);
+  const message = 'Máy chủ gặp sự cố. Vui lòng thử lại sau.';
+  res.status(500).render('error', { title: 'Đã có lỗi xảy ra', message }, (renderErr, html) => {
+    if (renderErr) {
+      console.error(renderErr);
+      return res.type('text').send(message);
+    }
+    res.send(html);
+  });
 });
 
 module.exports = app;

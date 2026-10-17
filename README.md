@@ -83,41 +83,38 @@ Mỗi lần push code mới lên nhánh `main`, vào ứng dụng trong hPanel v
 
 > Tạo chuỗi `SESSION_SECRET` ngẫu nhiên: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
-### Cách 2 — VPS (Ubuntu)
+### Cách 2 — VPS (Ubuntu 22.04 / 24.04) — cài tự động
+
+SSH vào VPS bằng tài khoản root (hoặc dùng **Browser terminal** trong hPanel → VPS), rồi chạy:
 
 ```bash
-# Cài Node.js 20, MySQL, Nginx, PM2
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs mysql-server nginx
-sudo npm install -g pm2
-
-# Lấy code
-git clone https://github.com/tvtmta992000-eng/Vat--ly.git vatly && cd vatly
-npm ci --omit=dev
-cp .env.example .env && nano .env    # điền thông tin
-
-# Chạy nền và tự khởi động cùng máy
-pm2 start server.js --name vatly
-pm2 save && pm2 startup
+curl -fsSL https://raw.githubusercontent.com/tvtmta992000-eng/Vat--ly/main/deploy/setup-vps.sh -o setup-vps.sh
+sudo bash setup-vps.sh
 ```
 
-Cấu hình Nginx làm reverse proxy (`/etc/nginx/sites-available/vatly`):
+Script sẽ hỏi tên miền (có thể để trống) và email quản trị, sau đó tự động:
 
-```nginx
-server {
-    server_name vatlyexample24.com www.vatlyexample24.com;
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+- Cài Node.js 20, PM2, MariaDB, Nginx, tường lửa UFW
+- Tạo database với mật khẩu ngẫu nhiên, sinh file `.env`
+- Tải code về `/var/www/vatly`, chạy bằng PM2 (tự khởi động lại khi VPS reboot)
+- Cấu hình Nginx; nếu có tên miền thì cài luôn SSL miễn phí (Let's Encrypt)
+- In ra địa chỉ website và **mật khẩu admin** ở cuối — hãy lưu lại
+
+**Trỏ tên miền về VPS:** trong phần quản lý DNS của tên miền, tạo 2 bản ghi `A`: `@` và `www` → địa chỉ IP của VPS. Nên trỏ trước khi chạy script để cài được SSL. Nếu trỏ sau, chạy: `sudo certbot --nginx -d tenmien.com -d www.tenmien.com`.
+
+**Cập nhật khi có code mới trên GitHub:**
+
+```bash
+sudo bash /var/www/vatly/deploy/update.sh
 ```
 
-Rồi bật SSL miễn phí: `sudo apt install certbot python3-certbot-nginx && sudo certbot --nginx`.
+**Lệnh hữu ích:**
 
-Cập nhật code: `git pull && npm ci --omit=dev && pm2 restart vatly`.
+| Việc | Lệnh |
+|---|---|
+| Xem log | `sudo -u vatly pm2 logs vatly` |
+| Khởi động lại | `sudo -u vatly pm2 restart vatly` |
+| Sửa cấu hình | `sudo nano /var/www/vatly/.env` rồi khởi động lại |
 
 ---
 
