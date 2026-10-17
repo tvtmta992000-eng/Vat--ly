@@ -63,6 +63,33 @@
       });
     }
 
+    // Nút hiện/ẩn mật khẩu cho mọi ô mật khẩu
+    document.querySelectorAll('input[type="password"]').forEach(function (input) {
+      var wrap = document.createElement('div');
+      wrap.className = 'password-field';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'password-toggle';
+      btn.setAttribute('aria-label', 'Hiện mật khẩu');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>';
+      wrap.appendChild(btn);
+
+      btn.addEventListener('click', function () {
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', String(show));
+        btn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+        btn.querySelector('use').setAttribute('href', show ? '#i-eye-off' : '#i-eye');
+        input.focus();
+      });
+      // Luôn ẩn lại trước khi gửi form để trình duyệt không lưu lịch sử dạng văn bản.
+      if (input.form) input.form.addEventListener('submit', function () { input.type = 'password'; });
+    });
+
     // Xác nhận trước khi thực hiện thao tác xoá
     document.querySelectorAll('form[data-confirm]').forEach(function (form) {
       form.addEventListener('submit', function (event) {

@@ -129,6 +129,18 @@ sudo bash /var/www/vatly/deploy/update.sh
 4. Sau khi lưu bài, thêm câu hỏi trắc nghiệm (2–6 lựa chọn, chọn đáp án đúng, có thể kèm lời giải).
 5. Ở **Người dùng**, admin có thể nâng tài khoản lên **Giáo viên** để cùng soạn bài.
 
+### Nhập cả bộ tài liệu từ file
+
+Nội dung soạn sẵn nằm trong thư mục `content/` (ví dụ `content/vat-ly-12.js`). Nhập lên website:
+
+```bash
+# Trên VPS
+cd /var/www/vatly && sudo -u vatly npm run import -- content/vat-ly-12.js
+# Thêm --xoa-bai-mau để xoá 6 bài mẫu ban đầu
+```
+
+Chạy lại nhiều lần không tạo bài trùng (bài đã có slug sẽ được bỏ qua).
+
 ## Cấu trúc thư mục
 
 ```
