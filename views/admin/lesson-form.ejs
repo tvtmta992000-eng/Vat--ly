@@ -1,0 +1,133 @@
+<%- include('../partials/head') %>
+<section class="page-head admin-head">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Đường dẫn"><a href="/quan-tri">Quản trị</a><span aria-hidden="true">/</span><span aria-current="page"><%= lesson ? 'Sửa bài học' : 'Thêm bài học' %></span></nav>
+    <div class="toolbar">
+      <h1><%= lesson ? lesson.title : 'Thêm bài học' %></h1>
+      <% if (lesson) { %><a class="btn btn-ghost" href="/bai/<%= lesson.slug %>"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>Xem trên web</a><% } %>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container">
+    <% if (chapterGroups.length === 0) { %>
+      <div class="alert alert-info">Chưa có chương nào. <a href="/quan-tri/chuong">Tạo chương</a> trước khi thêm bài học.</div>
+    <% } %>
+    <% if (Object.keys(errors).length) { %>
+      <div class="alert alert-error" role="alert">Vui lòng sửa các lỗi được đánh dấu bên dưới.</div>
+    <% } %>
+
+    <form method="post" action="<%= lesson ? '/quan-tri/bai/' + lesson.id : '/quan-tri/bai' %>" class="lesson-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-grid">
+        <div class="field <%= errors.title ? 'has-error' : '' %>">
+          <label for="title">Tên bài học</label>
+          <input id="title" name="title" type="text" required value="<%= values.title || '' %>">
+          <% if (errors.title) { %><p class="field-error"><%= errors.title %></p><% } %>
+        </div>
+        <div class="field <%= errors.chapter_id ? 'has-error' : '' %>">
+          <label for="chapter_id">Chương</label>
+          <select id="chapter_id" name="chapter_id" required>
+            <option value="">— Chọn chương —</option>
+            <% chapterGroups.forEach(function (g) { %>
+              <optgroup label="<%= g.name %>">
+                <% g.chapters.forEach(function (c) { %><option value="<%= c.id %>" <%= Number(values.chapter_id) === c.id ? 'selected' : '' %>><%= c.title %></option><% }) %>
+              </optgroup>
+            <% }) %>
+          </select>
+          <% if (errors.chapter_id) { %><p class="field-error"><%= errors.chapter_id %></p><% } %>
+        </div>
+        <div class="field <%= errors.slug ? 'has-error' : '' %>">
+          <label for="slug">Đường dẫn (slug) <span class="optional">(để trống sẽ tự tạo từ tên)</span></label>
+          <input id="slug" name="slug" type="text" value="<%= values.slug || '' %>" placeholder="vi-du-con-lac-don" aria-describedby="slug-hint">
+          <% if (errors.slug) { %><p class="field-error"><%= errors.slug %></p><% } else { %><p class="field-hint" id="slug-hint">Địa chỉ bài sẽ là /bai/&lt;slug&gt;</p><% } %>
+        </div>
+        <div class="field">
+          <label for="simulation">Mô phỏng đi kèm</label>
+          <select id="simulation" name="simulation">
+            <option value="">Không có</option>
+            <% simulations.forEach(function (s) { %><option value="<%= s.key %>" <%= values.simulation === s.key ? 'selected' : '' %>><%= s.title %></option><% }) %>
+          </select>
+        </div>
+        <div class="field field-wide">
+          <label for="summary">Tóm tắt <span class="optional">(hiển thị trong danh sách bài)</span></label>
+          <input id="summary" name="summary" type="text" maxlength="500" value="<%= values.summary || '' %>">
+        </div>
+      </div>
+
+      <div class="field <%= errors.content_md ? 'has-error' : '' %>">
+        <div class="editor-label-row">
+          <label for="content_md">Nội dung bài học</label>
+          <details class="help">
+            <summary>Hướng dẫn soạn thảo</summary>
+            <div class="help-body">
+              <p><code>## Tiêu đề</code> · <code>**đậm**</code> · <code>*nghiêng*</code> · <code>- gạch đầu dòng</code> · <code>&gt; ghi chú</code></p>
+              <p>Công thức trong dòng: <code>$v = \frac{s}{t}$</code> · Công thức riêng dòng: <code>$$T = 2\pi\sqrt{\frac{l}{g}}$$</code></p>
+              <p>Ảnh: <code>![mô tả](https://link-anh.jpg)</code> · Bảng: dùng cú pháp <code>| cột | cột |</code></p>
+            </div>
+          </details>
+        </div>
+        <div class="editor" data-editor>
+          <textarea id="content_md" name="content_md" rows="22" required spellcheck="false" data-preview-source><%= values.content_md || '' %></textarea>
+          <div class="editor-preview prose math-content" data-preview-target aria-live="polite" aria-label="Xem trước"></div>
+        </div>
+        <% if (errors.content_md) { %><p class="field-error"><%= errors.content_md %></p><% } %>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="position">Thứ tự trong chương</label>
+          <input id="position" name="position" type="number" inputmode="numeric" value="<%= values.position || 0 %>">
+        </div>
+        <div class="field">
+          <span class="label">Trạng thái</span>
+          <label class="check"><input type="checkbox" name="published" value="1" <%= values.published ? 'checked' : '' %>> Xuất bản (học sinh nhìn thấy)</label>
+        </div>
+      </div>
+
+      <div class="form-actions sticky-actions">
+        <button class="btn btn-primary" type="submit"><%= lesson ? 'Lưu bài học' : 'Tạo bài học' %></button>
+        <a class="btn btn-ghost" href="/quan-tri">Huỷ</a>
+      </div>
+    </form>
+
+    <% if (lesson) { %>
+      <section id="cau-hoi" class="admin-questions">
+        <div class="toolbar">
+          <h2 class="section-title">Câu hỏi trắc nghiệm (<%= questions.length %>)</h2>
+          <a class="btn btn-primary btn-sm" href="/quan-tri/bai/<%= lesson.id %>/cau-hoi/moi"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Thêm câu hỏi</a>
+        </div>
+        <% if (questions.length === 0) { %>
+          <p class="muted">Bài này chưa có câu hỏi.</p>
+        <% } else { %>
+          <ol class="admin-question-list">
+            <% questions.forEach(function (q) { %>
+              <li class="card">
+                <div class="math-content"><%= q.prompt_md %></div>
+                <ul class="admin-options">
+                  <% q.options.forEach(function (o, i) { %>
+                    <li class="<%= i === q.correct_index ? 'is-answer' : '' %>"><%= 'ABCDEF'[i] %>. <%= o %><% if (i === q.correct_index) { %> <span class="sr-only">(đáp án đúng)</span><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><% } %></li>
+                  <% }) %>
+                </ul>
+                <div class="row-actions">
+                  <a class="btn btn-ghost btn-sm" href="/quan-tri/cau-hoi/<%= q.id %>"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Sửa</a>
+                  <form method="post" action="/quan-tri/cau-hoi/<%= q.id %>/xoa" data-confirm="Xoá câu hỏi này?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-ghost btn-sm btn-danger-text" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá</button>
+                  </form>
+                </div>
+              </li>
+            <% }) %>
+          </ol>
+        <% } %>
+      </section>
+
+      <form class="danger-zone" method="post" action="/quan-tri/bai/<%= lesson.id %>/xoa" data-confirm="Xoá vĩnh viễn bài “<%= lesson.title %>” cùng toàn bộ câu hỏi và tiến độ của học sinh?">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-danger btn-sm" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá bài học</button>
+      </form>
+    <% } %>
+  </div>
+</section>
+<%- include('../partials/foot') %>

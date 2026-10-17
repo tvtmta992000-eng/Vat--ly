@@ -1,0 +1,31 @@
+</main>
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div>
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"><svg class="icon"><use href="#i-atom"/></svg></span>
+        <span class="brand-text">Vật Lý <strong>Example24</strong></span>
+      </a>
+      <p class="muted">Học Vật lý trực quan — từ những khái niệm đầu tiên đến chương trình đại học.</p>
+    </div>
+    <nav aria-label="Liên kết cuối trang">
+      <h2 class="footer-title">Cấp học</h2>
+      <ul>
+        <% levels.forEach(function (l) { %><li><a href="/cap/<%= l.slug %>"><%= l.name %></a></li><% }) %>
+      </ul>
+    </nav>
+    <nav aria-label="Công cụ">
+      <h2 class="footer-title">Công cụ</h2>
+      <ul>
+        <li><a href="/mo-phong">Mô phỏng tương tác</a></li>
+        <li><a href="/tim-kiem">Tìm kiếm bài học</a></li>
+        <li><a href="/tien-do">Tiến độ học tập</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="container footer-bottom">
+    <small>© <%= new Date().getFullYear() %> <%= siteName %>.</small>
+  </div>
+</footer>
+</body>
+</html>

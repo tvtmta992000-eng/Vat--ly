@@ -1,0 +1,28 @@
+<%- include('../partials/head') %>
+<section class="section auth">
+  <div class="card auth-card">
+    <h1>Tạo tài khoản</h1>
+    <p class="muted">Miễn phí — lưu tiến độ và điểm trắc nghiệm của bạn.</p>
+    <form method="post" action="/dang-ky" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% function field(name, label, type, autocomplete, hint) { %>
+        <div class="field <%= errors[name] ? 'has-error' : '' %>">
+          <label for="<%= name %>"><%= label %></label>
+          <input id="<%= name %>" name="<%= name %>" type="<%= type %>" autocomplete="<%= autocomplete %>" required
+                 value="<%= type === 'password' ? '' : (values[name] || '') %>"
+                 <% if (errors[name] || hint) { %>aria-describedby="<%= name %>-msg"<% } %>
+                 <% if (errors[name]) { %>aria-invalid="true"<% } %>>
+          <% if (errors[name]) { %><p class="field-error" id="<%= name %>-msg"><%= errors[name] %></p>
+          <% } else if (hint) { %><p class="field-hint" id="<%= name %>-msg"><%= hint %></p><% } %>
+        </div>
+      <% } %>
+      <% field('name', 'Họ và tên', 'text', 'name') %>
+      <% field('email', 'Email', 'email', 'email') %>
+      <% field('password', 'Mật khẩu', 'password', 'new-password', 'Ít nhất 8 ký tự.') %>
+      <% field('password_confirm', 'Nhập lại mật khẩu', 'password', 'new-password') %>
+      <button class="btn btn-primary btn-block" type="submit">Tạo tài khoản</button>
+    </form>
+    <p class="auth-switch">Đã có tài khoản? <a href="/dang-nhap">Đăng nhập</a></p>
+  </div>
+</section>
+<%- include('../partials/foot') %>

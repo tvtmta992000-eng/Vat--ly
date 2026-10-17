@@ -1,0 +1,51 @@
+<%- include('../partials/head') %>
+<section class="page-head admin-head">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Đường dẫn">
+      <a href="/quan-tri">Quản trị</a><span aria-hidden="true">/</span>
+      <a href="/quan-tri/bai/<%= lesson.id %>#cau-hoi"><%= lesson.title %></a><span aria-hidden="true">/</span>
+      <span aria-current="page"><%= question ? 'Sửa câu hỏi' : 'Thêm câu hỏi' %></span>
+    </nav>
+    <h1><%= question ? 'Sửa câu hỏi' : 'Thêm câu hỏi' %></h1>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container narrow">
+    <form class="card form-card" method="post" action="<%= question ? '/quan-tri/cau-hoi/' + question.id : '/quan-tri/bai/' + lesson.id + '/cau-hoi' %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="field <%= errors.prompt_md ? 'has-error' : '' %>">
+        <label for="prompt_md">Nội dung câu hỏi</label>
+        <textarea id="prompt_md" name="prompt_md" rows="4" required aria-describedby="prompt-hint"><%= values.prompt_md || '' %></textarea>
+        <% if (errors.prompt_md) { %><p class="field-error"><%= errors.prompt_md %></p><% } else { %><p class="field-hint" id="prompt-hint">Hỗ trợ Markdown và công thức <code>$...$</code>.</p><% } %>
+      </div>
+
+      <fieldset class="field <%= errors.options ? 'has-error' : '' %>">
+        <legend>Các lựa chọn — chọn ô tròn ở đáp án đúng</legend>
+        <% for (let i = 0; i < maxOptions; i++) { %>
+          <div class="option-input">
+            <input type="radio" name="correct_index" value="<%= i %>" id="correct_<%= i %>" <%= values.chosenRaw === i ? 'checked' : '' %> aria-label="Đáp án <%= 'ABCDEF'[i] %> là đáp án đúng">
+            <label for="option_<%= i %>" class="option-letter"><%= 'ABCDEF'[i] %></label>
+            <input type="text" id="option_<%= i %>" name="option_<%= i %>" value="<%= values.rawOptions[i] || '' %>" placeholder="<%= i < 2 ? 'Bắt buộc' : 'Không bắt buộc' %>">
+          </div>
+        <% } %>
+        <% if (errors.options) { %><p class="field-error"><%= errors.options %></p><% } %>
+      </fieldset>
+
+      <div class="field">
+        <label for="explanation_md">Lời giải <span class="optional">(hiện sau khi nộp bài)</span></label>
+        <textarea id="explanation_md" name="explanation_md" rows="4"><%= values.explanation_md || '' %></textarea>
+      </div>
+      <div class="field">
+        <label for="position">Thứ tự</label>
+        <input id="position" name="position" type="number" inputmode="numeric" value="<%= values.position || 0 %>">
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Lưu câu hỏi</button>
+        <% if (!question) { %><button class="btn btn-secondary" type="submit" name="another" value="1">Lưu và thêm câu khác</button><% } %>
+        <a class="btn btn-ghost" href="/quan-tri/bai/<%= lesson.id %>#cau-hoi">Huỷ</a>
+      </div>
+    </form>
+  </div>
+</section>
+<%- include('../partials/foot') %>

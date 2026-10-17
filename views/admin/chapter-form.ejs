@@ -1,0 +1,24 @@
+<%- include('../partials/head') %>
+<section class="page-head admin-head">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Đường dẫn"><a href="/quan-tri/chuong">Quản lý chương</a><span aria-hidden="true">/</span><span aria-current="page">Sửa chương</span></nav>
+    <h1><%= chapter.title %></h1>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container narrow">
+    <form class="card form-card" method="post" action="/quan-tri/chuong/<%= chapter.id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <%- include('chapter-fields', { values: values, errors: errors }) %>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Lưu thay đổi</button>
+        <a class="btn btn-ghost" href="/quan-tri/chuong">Huỷ</a>
+      </div>
+    </form>
+    <form class="danger-zone" method="post" action="/quan-tri/chuong/<%= chapter.id %>/xoa" data-confirm="Xoá chương “<%= chapter.title %>”? Chỉ xoá được khi chương không còn bài học.">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-danger btn-sm" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá chương</button>
+    </form>
+  </div>
+</section>
+<%- include('../partials/foot') %>

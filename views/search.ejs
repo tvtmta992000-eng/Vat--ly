@@ -1,0 +1,35 @@
+<%- include('partials/head') %>
+<section class="page-head">
+  <div class="container narrow">
+    <h1>Tìm kiếm bài học</h1>
+    <form class="search-form" action="/tim-kiem" method="get" role="search">
+      <label class="sr-only" for="q">Từ khoá</label>
+      <input id="q" name="q" type="search" value="<%= q %>" placeholder="Ví dụ: con lắc, định luật Ohm, tốc độ…" autofocus>
+      <button class="btn btn-primary" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Tìm</button>
+    </form>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container narrow">
+    <% if (q) { %>
+      <p class="muted" role="status"><%= results.length %> kết quả cho “<%= q %>”</p>
+      <% if (results.length === 0) { %>
+        <div class="empty-state"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><p>Không tìm thấy bài học phù hợp. Thử từ khoá ngắn hơn hoặc không dấu.</p></div>
+      <% } %>
+      <ol class="lesson-list">
+        <% results.forEach(function (l) { const lv = levels.find(function (x) { return x.slug === l.level; }); %>
+          <li>
+            <a class="lesson-row" href="/bai/<%= l.slug %>">
+              <span class="lesson-row-body">
+                <span class="lesson-row-title"><%= l.title %></span>
+                <span class="lesson-row-summary"><%= lv ? lv.name : '' %> · <%= l.chapter_title %></span>
+              </span>
+              <svg class="icon chevron" aria-hidden="true"><use href="#i-arrow-right"/></svg>
+            </a>
+          </li>
+        <% }) %>
+      </ol>
+    <% } %>
+  </div>
+</section>
+<%- include('partials/foot') %>

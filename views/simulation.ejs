@@ -1,0 +1,22 @@
+<%- include('partials/head') %>
+<section class="page-head">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Đường dẫn"><a href="/">Trang chủ</a><span aria-hidden="true">/</span><a href="/mo-phong">Mô phỏng</a><span aria-hidden="true">/</span><span aria-current="page"><%= simulation.title %></span></nav>
+    <h1><%= simulation.title %></h1>
+    <p class="lead"><%= simulation.description %></p>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container">
+    <%- include('partials/sim', { sim: simulation }) %>
+    <% if (related.length) { %>
+      <div class="related">
+        <h2 class="h3">Bài học liên quan</h2>
+        <ul>
+          <% related.forEach(function (l) { %><li><a href="/bai/<%= l.slug %>"><%= l.title %></a></li><% }) %>
+        </ul>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('partials/foot') %>

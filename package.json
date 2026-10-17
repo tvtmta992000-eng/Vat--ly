@@ -1,0 +1,40 @@
+{
+  "name": "vatly-example24",
+  "version": "1.0.0",
+  "description": "Vật Lý Example24 — website học tập môn Vật lý (THCS, THPT, ôn thi, đại cương)",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@fontsource/be-vietnam-pro": "^5.3.0",
+    "@fontsource/noto-sans": "^5.3.0",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
+    "dotenv": "^18.0.8",
+    "ejs": "^7.0.1",
+    "express": "^5.3.0",
+    "express-mysql-session": "^3.0.3",
+    "express-rate-limit": "^8.7.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "katex": "^0.19.0",
+    "marked": "^18.1.1",
+    "mysql2": "^3.24.6",
+    "sanitize-html": "^2.18.1"
+  },
+  "overrides": {
+    "express-mysql-session": {
+      "mysql2": "$mysql2"
+    }
+  }
+}

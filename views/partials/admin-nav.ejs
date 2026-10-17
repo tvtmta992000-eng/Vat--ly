@@ -1,0 +1,7 @@
+<nav class="admin-nav" aria-label="Quản trị">
+  <a href="/quan-tri" <% if (adminSection === 'tong-quan' || adminSection === 'bai' || adminSection === 'cau-hoi') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Bài học</a>
+  <a href="/quan-tri/chuong" <% if (adminSection === 'chuong') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg>Chương</a>
+  <% if (user.role === 'admin') { %>
+    <a href="/quan-tri/nguoi-dung" <% if (adminSection === 'nguoi-dung') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>Người dùng</a>
+  <% } %>
+</nav>

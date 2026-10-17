@@ -1,0 +1,49 @@
+<%- include('../partials/head') %>
+<section class="page-head admin-head">
+  <div class="container">
+    <h1>Quản trị nội dung</h1>
+    <%- include('../partials/admin-nav') %>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container">
+    <div class="grid grid-4 stat-row">
+      <div class="card stat"><span class="stat-label">Chương</span><span class="stat-value"><%= stats.chapters %></span></div>
+      <div class="card stat"><span class="stat-label">Bài học</span><span class="stat-value"><%= stats.lessons %></span></div>
+      <div class="card stat"><span class="stat-label">Câu hỏi</span><span class="stat-value"><%= stats.questions %></span></div>
+      <div class="card stat"><span class="stat-label">Người dùng</span><span class="stat-value"><%= stats.users %></span></div>
+    </div>
+
+    <div class="toolbar">
+      <h2 class="section-title">Tất cả bài học</h2>
+      <a class="btn btn-primary" href="/quan-tri/bai/moi"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Thêm bài học</a>
+    </div>
+
+    <% if (lessons.length === 0) { %>
+      <div class="empty-state"><p>Chưa có bài học. Hãy <a href="/quan-tri/chuong">tạo chương</a> trước, sau đó thêm bài học.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th scope="col">Bài học</th><th scope="col">Cấp / Chương</th><th scope="col">Câu hỏi</th><th scope="col">Trạng thái</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr>
+          </thead>
+          <tbody>
+            <% lessons.forEach(function (l) { %>
+              <tr>
+                <td><a href="/quan-tri/bai/<%= l.id %>"><strong><%= l.title %></strong></a></td>
+                <td><span class="badge badge-<%= l.level %>"><%= l.levelName %></span> <span class="muted small"><%= l.chapter_title %></span></td>
+                <td><%= l.question_count %></td>
+                <td><%= l.published ? 'Đã xuất bản' : 'Bản nháp' %></td>
+                <td class="row-actions">
+                  <a class="btn btn-ghost btn-sm" href="/bai/<%= l.slug %>" aria-label="Xem bài <%= l.title %>"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>Xem</a>
+                  <a class="btn btn-ghost btn-sm" href="/quan-tri/bai/<%= l.id %>" aria-label="Sửa bài <%= l.title %>"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Sửa</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('../partials/foot') %>

@@ -1,0 +1,69 @@
+<div class="sim" data-sim="<%= sim.key %>">
+  <div class="sim-stage">
+    <canvas class="sim-canvas" width="720" height="400" role="img" aria-label="Mô phỏng <%= sim.title %>"></canvas>
+  </div>
+  <div class="sim-panel">
+    <% if (sim.key === 'pendulum') { %>
+      <div class="sim-controls">
+        <label class="slider"><span>Chiều dài dây</span> <output data-for="length">1,00 m</output>
+          <input type="range" name="length" min="0.2" max="2.5" step="0.05" value="1"></label>
+        <label class="slider"><span>Gia tốc trọng trường g</span> <output data-for="gravity">9,81 m/s²</output>
+          <input type="range" name="gravity" min="1.6" max="24.8" step="0.01" value="9.81"></label>
+        <label class="slider"><span>Biên độ góc</span> <output data-for="angle">10°</output>
+          <input type="range" name="angle" min="2" max="60" step="1" value="10"></label>
+        <div class="preset-row" role="group" aria-label="Chọn hành tinh">
+          <button type="button" class="chip-btn" data-gravity="9.81">Trái Đất</button>
+          <button type="button" class="chip-btn" data-gravity="1.62">Mặt Trăng</button>
+          <button type="button" class="chip-btn" data-gravity="3.71">Sao Hoả</button>
+          <button type="button" class="chip-btn" data-gravity="24.79">Sao Mộc</button>
+        </div>
+      </div>
+      <dl class="sim-readout">
+        <div><dt>Chu kì lý thuyết $T = 2\pi\sqrt{l/g}$</dt><dd data-out="theory">—</dd></div>
+        <div><dt>Chu kì đo được</dt><dd data-out="measured">—</dd></div>
+        <div><dt>Số dao động</dt><dd data-out="count">0</dd></div>
+      </dl>
+    <% } else if (sim.key === 'projectile') { %>
+      <div class="sim-controls">
+        <label class="slider"><span>Vận tốc ban đầu $v_0$</span> <output data-for="speed">20 m/s</output>
+          <input type="range" name="speed" min="5" max="40" step="1" value="20"></label>
+        <label class="slider"><span>Góc ném $\alpha$</span> <output data-for="angle">45°</output>
+          <input type="range" name="angle" min="5" max="85" step="1" value="45"></label>
+        <label class="slider"><span>Gia tốc trọng trường g</span> <output data-for="gravity">9,8 m/s²</output>
+          <input type="range" name="gravity" min="1.6" max="20" step="0.1" value="9.8"></label>
+        <label class="check"><input type="checkbox" name="keep" checked> Giữ lại quỹ đạo các lần ném trước</label>
+      </div>
+      <dl class="sim-readout">
+        <div><dt>Độ cao cực đại H</dt><dd data-out="height">—</dd></div>
+        <div><dt>Tầm xa L</dt><dd data-out="range">—</dd></div>
+        <div><dt>Thời gian bay</dt><dd data-out="time">—</dd></div>
+      </dl>
+    <% } else if (sim.key === 'circuit') { %>
+      <div class="sim-controls">
+        <label class="slider"><span>Suất điện động $\mathcal{E}$</span> <output data-for="emf">12 V</output>
+          <input type="range" name="emf" min="1" max="24" step="0.5" value="12"></label>
+        <label class="slider"><span>Điện trở trong r</span> <output data-for="internal">1 Ω</output>
+          <input type="range" name="internal" min="0" max="5" step="0.1" value="1"></label>
+        <label class="slider"><span>Điện trở $R_1$</span> <output data-for="r1">6 Ω</output>
+          <input type="range" name="r1" min="1" max="30" step="1" value="6"></label>
+        <label class="slider"><span>Điện trở $R_2$</span> <output data-for="r2">3 Ω</output>
+          <input type="range" name="r2" min="1" max="30" step="1" value="3"></label>
+        <div class="segmented" role="radiogroup" aria-label="Cách mắc R1 và R2">
+          <label><input type="radio" name="mode" value="series" checked><span>Nối tiếp</span></label>
+          <label><input type="radio" name="mode" value="parallel"><span>Song song</span></label>
+        </div>
+      </div>
+      <dl class="sim-readout">
+        <div><dt>Điện trở mạch ngoài R</dt><dd data-out="rtotal">—</dd></div>
+        <div><dt>Cường độ dòng điện I</dt><dd data-out="current">—</dd></div>
+        <div><dt>Hiệu điện thế mạch ngoài U</dt><dd data-out="voltage">—</dd></div>
+        <div><dt>Công suất mạch ngoài P</dt><dd data-out="power">—</dd></div>
+      </dl>
+    <% } %>
+    <div class="sim-buttons">
+      <button type="button" class="btn btn-primary btn-sm" data-action="toggle"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span><%= sim.key === 'projectile' ? 'Ném' : 'Chạy' %></span></button>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="reset"><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>Đặt lại</button>
+    </div>
+  </div>
+</div>
+<script defer src="/js/sim-<%= sim.key %>.js"></script>

@@ -1,0 +1,81 @@
+<%- include('partials/head') %>
+<section class="page-head">
+  <div class="container">
+    <h1>Tiến độ học tập</h1>
+    <p class="lead">Xin chào <strong><%= user.name %></strong>, đây là tổng quan quá trình học của bạn.</p>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container">
+    <div class="grid grid-3 stat-row">
+      <div class="card stat">
+        <span class="stat-label">Bài đã hoàn thành</span>
+        <span class="stat-value"><%= levelProgress.reduce(function (s, l) { return s + l.done; }, 0) %></span>
+      </div>
+      <div class="card stat">
+        <span class="stat-label">Lượt làm trắc nghiệm</span>
+        <span class="stat-value"><%= summary.attempts %></span>
+      </div>
+      <div class="card stat">
+        <span class="stat-label">Tỉ lệ trả lời đúng</span>
+        <span class="stat-value"><%= summary.answered > 0 ? Math.round(summary.correct / summary.answered * 100) + '%' : '—' %></span>
+      </div>
+    </div>
+
+    <h2 class="section-title">Theo cấp học</h2>
+    <div class="grid grid-2">
+      <% levelProgress.forEach(function (l) { const pct = l.total ? Math.round(l.done / l.total * 100) : 0; %>
+        <a class="card progress-card" href="/cap/<%= l.slug %>">
+          <div class="progress-head">
+            <span class="level-icon level-<%= l.slug %>" aria-hidden="true"><svg class="icon"><use href="#i-<%= l.icon %>"/></svg></span>
+            <div>
+              <h3><%= l.name %></h3>
+              <span class="muted small"><%= l.done %>/<%= l.total %> bài</span>
+            </div>
+            <span class="progress-pct"><%= pct %>%</span>
+          </div>
+          <div class="progress-bar" role="progressbar" aria-label="Tiến độ <%= l.name %>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>">
+            <span style="width: <%= pct %>%"></span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+
+    <div class="grid grid-2 progress-lists">
+      <section>
+        <h2 class="section-title">Kết quả trắc nghiệm gần đây</h2>
+        <% if (attempts.length === 0) { %>
+          <p class="muted">Bạn chưa làm bài trắc nghiệm nào.</p>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th scope="col">Bài học</th><th scope="col">Điểm</th><th scope="col">Thời gian</th></tr></thead>
+              <tbody>
+                <% attempts.forEach(function (a) { const pct = Math.round(a.score / a.total * 100); %>
+                  <tr>
+                    <td><a href="/bai/<%= a.slug %>"><%= a.title %></a></td>
+                    <td><span class="score <%= pct >= 80 ? 'is-good' : pct >= 50 ? 'is-ok' : 'is-low' %>"><%= a.score %>/<%= a.total %></span></td>
+                    <td class="muted small"><%= new Date(a.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+      <section>
+        <h2 class="section-title">Bài vừa hoàn thành</h2>
+        <% if (recentDone.length === 0) { %>
+          <p class="muted">Chưa có bài nào. <a href="/#cap-hoc">Bắt đầu học ngay</a>.</p>
+        <% } else { %>
+          <ul class="simple-list">
+            <% recentDone.forEach(function (l) { %>
+              <li><svg class="icon icon-success" aria-hidden="true"><use href="#i-check-circle"/></svg><a href="/bai/<%= l.slug %>"><%= l.title %></a><span class="muted small"><%= l.levelName %></span></li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </section>
+    </div>
+  </div>
+</section>
+<%- include('partials/foot') %>

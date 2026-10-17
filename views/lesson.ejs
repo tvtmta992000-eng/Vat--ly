@@ -1,0 +1,116 @@
+<%- include('partials/head') %>
+
+<article class="lesson">
+  <header class="page-head">
+    <div class="container narrow">
+      <nav class="breadcrumb" aria-label="Đường dẫn">
+        <a href="/">Trang chủ</a><span aria-hidden="true">/</span>
+        <a href="/cap/<%= level.slug %>"><%= level.name %></a><span aria-hidden="true">/</span>
+        <span><%= lesson.chapter_title %></span>
+      </nav>
+      <h1><%= lesson.title %></h1>
+      <% if (lesson.summary) { %><p class="lead"><%= lesson.summary %></p><% } %>
+      <div class="lesson-meta">
+        <% if (!lesson.published) { %><span class="badge badge-warning">Bản nháp — chỉ giáo viên thấy</span><% } %>
+        <% if (completed) { %><span class="badge badge-success"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Đã hoàn thành</span><% } %>
+        <% if (bestAttempt) { %><span class="badge">Điểm cao nhất: <%= bestAttempt.score %>/<%= bestAttempt.total %></span><% } %>
+        <% if (questions.length) { %><a class="badge badge-link" href="#trac-nghiem"><%= questions.length %> câu trắc nghiệm</a><% } %>
+        <% if (isStaff) { %><a class="badge badge-link" href="/quan-tri/bai/<%= lesson.id %>"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Sửa bài</a><% } %>
+      </div>
+    </div>
+  </header>
+
+  <div class="container narrow">
+    <div class="prose math-content"><%- contentHtml %></div>
+
+    <% if (simulation) { %>
+      <section class="lesson-section" aria-labelledby="sim-heading">
+        <h2 id="sim-heading"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Mô phỏng: <%= simulation.title %></h2>
+        <%- include('partials/sim', { sim: simulation }) %>
+      </section>
+    <% } %>
+
+    <% if (questions.length) { %>
+      <section id="trac-nghiem" class="lesson-section quiz" aria-labelledby="quiz-heading">
+        <h2 id="quiz-heading"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>Trắc nghiệm</h2>
+
+        <% if (quizResult) { const pct = Math.round(quizResult.score / quizResult.total * 100); %>
+          <div class="quiz-score <%= pct >= 80 ? 'is-good' : pct >= 50 ? 'is-ok' : 'is-low' %>" role="status" tabindex="-1" id="quiz-result">
+            <strong><%= quizResult.score %>/<%= quizResult.total %> câu đúng (<%= pct %>%)</strong>
+            <span>
+              <% if (pct >= 80) { %>Xuất sắc! <%= user ? 'Bài học đã được đánh dấu hoàn thành.' : 'Đăng nhập để lưu kết quả.' %>
+              <% } else if (pct >= 50) { %>Khá tốt — xem lại lời giải các câu sai nhé.
+              <% } else { %>Hãy đọc lại lý thuyết và thử lần nữa.<% } %>
+            </span>
+          </div>
+        <% } else if (!user) { %>
+          <p class="muted small"><a href="/dang-nhap?next=/bai/<%= lesson.slug %>">Đăng nhập</a> để lưu điểm và tiến độ.</p>
+        <% } %>
+
+        <form method="post" action="/bai/<%= lesson.slug %>/nop-bai#quiz-result" class="quiz-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% questions.forEach(function (q, qi) {
+               const r = quizResult ? quizResult.results.find(function (x) { return x.questionId === q.id; }) : null; %>
+            <fieldset class="question <%= r ? (r.correct ? 'is-correct' : 'is-wrong') : '' %>">
+              <legend>
+                <span class="question-number">Câu <%= qi + 1 %></span>
+                <span class="math-content question-prompt"><%- q.promptHtml %></span>
+              </legend>
+              <div class="options">
+                <% q.optionsHtml.forEach(function (opt, oi) {
+                     const isChosen = r && r.chosen === oi;
+                     const isAnswer = r && q.correct_index === oi; %>
+                  <label class="option <%= isAnswer ? 'is-answer' : '' %> <%= isChosen && !isAnswer ? 'is-chosen-wrong' : '' %>">
+                    <input type="radio" name="q<%= q.id %>" value="<%= oi %>" <%= isChosen ? 'checked' : '' %> <%= r ? 'disabled' : '' %>>
+                    <span class="option-letter" aria-hidden="true"><%= 'ABCDEF'[oi] %></span>
+                    <span class="math-content"><%- opt %></span>
+                    <% if (isAnswer) { %><span class="option-tag">Đáp án đúng</span><% } %>
+                    <% if (isChosen && !isAnswer) { %><span class="option-tag">Bạn chọn</span><% } %>
+                  </label>
+                <% }) %>
+              </div>
+              <% if (r) { %>
+                <p class="question-verdict"><%= r.correct ? 'Chính xác!' : (r.chosen === null ? 'Bạn chưa chọn đáp án.' : 'Chưa đúng.') %></p>
+                <% if (q.explanationHtml) { %>
+                  <div class="explanation math-content"><strong>Lời giải:</strong> <%- q.explanationHtml %></div>
+                <% } %>
+              <% } %>
+            </fieldset>
+          <% }) %>
+
+          <div class="quiz-actions">
+            <% if (quizResult) { %>
+              <a class="btn btn-primary" href="/bai/<%= lesson.slug %>#trac-nghiem"><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>Làm lại</a>
+            <% } else { %>
+              <button class="btn btn-primary" type="submit">Nộp bài</button>
+            <% } %>
+          </div>
+        </form>
+      </section>
+    <% } %>
+
+    <div class="lesson-footer">
+      <% if (user) { %>
+        <form method="post" action="/bai/<%= lesson.slug %>/hoan-thanh">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% if (completed) { %>
+            <input type="hidden" name="undo" value="1">
+            <button class="btn btn-ghost" type="submit">Bỏ đánh dấu hoàn thành</button>
+          <% } else { %>
+            <button class="btn btn-secondary" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Đánh dấu đã học xong</button>
+          <% } %>
+        </form>
+      <% } %>
+      <nav class="pager" aria-label="Bài trước và bài sau">
+        <% if (neighbours.prev) { %>
+          <a class="pager-link" href="/bai/<%= neighbours.prev.slug %>"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg><span><small>Bài trước</small><%= neighbours.prev.title %></span></a>
+        <% } else { %><span></span><% } %>
+        <% if (neighbours.next) { %>
+          <a class="pager-link pager-next" href="/bai/<%= neighbours.next.slug %>"><span><small>Bài tiếp theo</small><%= neighbours.next.title %></span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        <% } %>
+      </nav>
+    </div>
+  </div>
+</article>
+
+<%- include('partials/foot') %>

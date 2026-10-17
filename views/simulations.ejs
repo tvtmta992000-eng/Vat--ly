@@ -1,0 +1,23 @@
+<%- include('partials/head') %>
+<section class="page-head">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Đường dẫn"><a href="/">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Mô phỏng</span></nav>
+    <h1>Mô phỏng tương tác</h1>
+    <p class="lead">Thay đổi thông số, quan sát hiện tượng và kiểm chứng công thức ngay trên trình duyệt.</p>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container">
+    <div class="grid grid-3">
+      <% simulations.forEach(function (s) { %>
+        <a class="card sim-card" href="/mo-phong/<%= s.key %>">
+          <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-<%= s.key === 'circuit' ? 'zap' : s.key %>"/></svg></span>
+          <h2 class="h3"><%= s.title %></h2>
+          <p><%= s.description %></p>
+          <span class="level-meta">Mở mô phỏng <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<%- include('partials/foot') %>

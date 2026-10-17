@@ -1,0 +1,134 @@
+<%- include('partials/head') %>
+
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow">Học Vật lý trực quan · Miễn phí</p>
+      <h1>Hiểu bản chất, không chỉ thuộc công thức.</h1>
+      <p class="lead">Bài giảng rõ ràng từ THCS đến đại cương, trắc nghiệm chấm điểm ngay và mô phỏng thí nghiệm bạn có thể tự điều chỉnh.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="#cap-hoc">Chọn cấp học<svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        <a class="btn btn-secondary btn-lg" href="/mo-phong"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Thử mô phỏng</a>
+      </div>
+      <dl class="hero-stats">
+        <div><dt>Bài giảng</dt><dd><%= stats.lessons %></dd></div>
+        <div><dt>Câu hỏi trắc nghiệm</dt><dd><%= stats.questions %></dd></div>
+        <div><dt>Mô phỏng</dt><dd><%= simulations.length %></dd></div>
+      </dl>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="formula-card formula-1">$$T = 2\pi\sqrt{\frac{l}{g}}$$</div>
+      <div class="formula-card formula-2">$$I = \frac{\mathcal{E}}{R + r}$$</div>
+      <div class="formula-card formula-3">$$v = \frac{s}{t}$$</div>
+      <svg class="hero-orbit" viewBox="0 0 200 200">
+        <ellipse cx="100" cy="100" rx="88" ry="34" transform="rotate(30 100 100)"/>
+        <ellipse cx="100" cy="100" rx="88" ry="34" transform="rotate(-30 100 100)"/>
+        <ellipse cx="100" cy="100" rx="88" ry="34" transform="rotate(90 100 100)"/>
+        <circle cx="100" cy="100" r="9" class="nucleus"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="cap-hoc" class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2>Chọn cấp học của bạn</h2>
+      <p class="muted">Nội dung được sắp xếp theo chương, đi từ khái niệm cơ bản đến vận dụng.</p>
+    </div>
+    <div class="grid grid-4">
+      <% levelCards.forEach(function (l) { %>
+        <a class="card level-card" href="/cap/<%= l.slug %>">
+          <span class="level-icon level-<%= l.slug %>" aria-hidden="true"><svg class="icon"><use href="#i-<%= l.icon %>"/></svg></span>
+          <span class="level-grades"><%= l.grades %></span>
+          <h3><%= l.name %></h3>
+          <p><%= l.description %></p>
+          <span class="level-meta"><%= l.lessonCount %> bài học <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <h2>Mọi thứ bạn cần để học Vật lý</h2>
+    </div>
+    <div class="grid grid-4 features">
+      <div class="feature">
+        <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-book"/></svg></span>
+        <h3>Bài giảng theo chương</h3>
+        <p>Lý thuyết ngắn gọn, công thức hiển thị chuẩn như sách giáo khoa, kèm ví dụ giải mẫu.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-check-circle"/></svg></span>
+        <h3>Trắc nghiệm chấm ngay</h3>
+        <p>Làm bài sau mỗi bài học, biết ngay đúng sai và đọc lời giải chi tiết từng câu.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-flask"/></svg></span>
+        <h3>Mô phỏng tương tác</h3>
+        <p>Kéo thanh trượt, đổi thông số và quan sát hiện tượng thay đổi theo thời gian thực.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-chart"/></svg></span>
+        <h3>Theo dõi tiến độ</h3>
+        <p>Lưu bài đã học, điểm các lần làm bài và phần trăm hoàn thành từng cấp học.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<% if (latest.length) { %>
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2>Bài học mới</h2>
+    </div>
+    <div class="grid grid-3">
+      <% latest.forEach(function (l) { const lv = levels.find(function (x) { return x.slug === l.level; }); %>
+        <a class="card lesson-card" href="/bai/<%= l.slug %>">
+          <span class="badge badge-<%= l.level %>"><%= lv ? lv.name : l.level %></span>
+          <h3><%= l.title %></h3>
+          <% if (l.summary) { %><p><%= l.summary %></p><% } %>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <h2>Phòng thí nghiệm ảo</h2>
+      <p class="muted">Không cần dụng cụ — chạy ngay trên trình duyệt, kể cả điện thoại.</p>
+    </div>
+    <div class="grid grid-3">
+      <% simulations.forEach(function (s) { %>
+        <a class="card sim-card" href="/mo-phong/<%= s.key %>">
+          <span class="feature-icon" aria-hidden="true"><svg class="icon"><use href="#i-<%= s.key === 'circuit' ? 'zap' : s.key %>"/></svg></span>
+          <h3><%= s.title %></h3>
+          <p><%= s.description %></p>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<% if (!user) { %>
+<section class="section">
+  <div class="container">
+    <div class="cta-band">
+      <div>
+        <h2>Lưu tiến độ và điểm số của bạn</h2>
+        <p>Tạo tài khoản miễn phí để theo dõi bài đã học và kết quả trắc nghiệm.</p>
+      </div>
+      <a class="btn btn-accent btn-lg" href="/dang-ky">Đăng ký miễn phí</a>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<%- include('partials/foot') %>

@@ -1,0 +1,54 @@
+<%- include('partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Đường dẫn"><a href="/">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page"><%= level.name %></span></nav>
+    <div class="page-title-row">
+      <span class="level-icon level-<%= level.slug %>" aria-hidden="true"><svg class="icon"><use href="#i-<%= level.icon %>"/></svg></span>
+      <div>
+        <h1><%= level.name %> <span class="muted title-sub"><%= level.grades %></span></h1>
+        <p class="lead"><%= level.description %></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container narrow">
+    <% if (chapters.length === 0) { %>
+      <div class="empty-state">
+        <svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>
+        <p>Nội dung cho cấp học này đang được biên soạn. Hãy quay lại sau nhé!</p>
+      </div>
+    <% } %>
+    <% chapters.forEach(function (c) { %>
+      <section class="chapter">
+        <h2 class="chapter-title"><%= c.title %></h2>
+        <% if (c.description) { %><p class="muted"><%= c.description %></p><% } %>
+        <% if (c.lessons.length === 0) { %>
+          <p class="muted small">Chưa có bài học.</p>
+        <% } else { %>
+          <ol class="lesson-list">
+            <% c.lessons.forEach(function (l) { const done = completed.has(l.id); %>
+              <li>
+                <a href="/bai/<%= l.slug %>" class="lesson-row <%= done ? 'is-done' : '' %>">
+                  <span class="lesson-status" aria-hidden="true">
+                    <% if (done) { %><svg class="icon"><use href="#i-check"/></svg><% } %>
+                  </span>
+                  <span class="lesson-row-body">
+                    <span class="lesson-row-title"><%= l.title %><% if (done) { %><span class="sr-only"> (đã hoàn thành)</span><% } %></span>
+                    <% if (l.summary) { %><span class="lesson-row-summary"><%= l.summary %></span><% } %>
+                  </span>
+                  <% if (l.simulation) { %><span class="chip" title="Có mô phỏng"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Mô phỏng</span><% } %>
+                  <svg class="icon chevron" aria-hidden="true"><use href="#i-arrow-right"/></svg>
+                </a>
+              </li>
+            <% }) %>
+          </ol>
+        <% } %>
+      </section>
+    <% }) %>
+  </div>
+</section>
+
+<%- include('partials/foot') %>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title ? `${title} · ${siteName}` : `${siteName} — Học Vật lý trực quan` %></title>
+  <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Học Vật lý từ THCS, THPT đến đại cương: bài giảng có công thức rõ ràng, trắc nghiệm chấm điểm và mô phỏng tương tác.' %>">
+  <meta name="theme-color" content="#4338CA">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/vendor/fonts.css">
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <script defer src="/vendor/katex/katex.min.js"></script>
+  <script defer src="/vendor/katex/contrib/auto-render.min.js"></script>
+  <script defer src="/js/main.js"></script>
+</head>
+<body>
+<%- include('icons') %>
+<a class="skip-link" href="#main">Bỏ qua, tới nội dung chính</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="<%= siteName %> — Trang chủ">
+      <span class="brand-mark" aria-hidden="true"><svg class="icon"><use href="#i-atom"/></svg></span>
+      <span class="brand-text">Vật Lý <strong>Example24</strong></span>
+    </a>
+
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Mở menu">
+      <svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg>
+    </button>
+
+    <nav id="site-nav" class="site-nav" aria-label="Điều hướng chính">
+      <ul class="nav-links">
+        <% levels.forEach(function (l) { %>
+          <li><a href="/cap/<%= l.slug %>" <% if (currentPath === '/cap/' + l.slug) { %>aria-current="page"<% } %> title="<%= l.name %>"><%= l.shortName %></a></li>
+        <% }) %>
+        <li><a href="/mo-phong" <% if (currentPath.startsWith('/mo-phong')) { %>aria-current="page"<% } %>>Mô phỏng</a></li>
+      </ul>
+
+      <form class="nav-search" action="/tim-kiem" method="get" role="search">
+        <label class="sr-only" for="nav-q">Tìm bài học</label>
+        <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="nav-q" name="q" type="search" placeholder="Tìm bài học…" autocomplete="off">
+      </form>
+
+      <div class="nav-account">
+        <% if (user) { %>
+          <a class="btn btn-ghost btn-sm" href="/tien-do"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Tiến độ</a>
+          <% if (isStaff) { %>
+            <a class="btn btn-ghost btn-sm" href="/quan-tri"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>Quản trị</a>
+          <% } %>
+          <form action="/dang-xuat" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-ghost btn-sm" type="submit" title="Đăng xuất (<%= user.email %>)">
+              <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>Đăng xuất
+            </button>
+          </form>
+        <% } else { %>
+          <a class="btn btn-ghost btn-sm" href="/dang-nhap">Đăng nhập</a>
+          <a class="btn btn-primary btn-sm" href="/dang-ky">Đăng ký miễn phí</a>
+        <% } %>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+<% if (flash) { %>
+  <div class="container">
+    <div class="alert alert-<%= flash.type %>" role="status"><%= flash.message %></div>
+  </div>
+<% } %>

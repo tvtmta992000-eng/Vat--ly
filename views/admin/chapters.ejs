@@ -1,0 +1,45 @@
+<%- include('../partials/head') %>
+<section class="page-head admin-head">
+  <div class="container">
+    <h1>Quản lý chương</h1>
+    <%- include('../partials/admin-nav') %>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="container admin-split">
+    <div>
+      <% if (chapters.length === 0) { %>
+        <div class="empty-state"><p>Chưa có chương nào. Tạo chương đầu tiên ở khung bên cạnh.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Chương</th><th scope="col">Cấp học</th><th scope="col">Thứ tự</th><th scope="col">Bài</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+            <tbody>
+              <% chapters.forEach(function (c) { %>
+                <tr>
+                  <td><strong><%= c.title %></strong></td>
+                  <td><span class="badge badge-<%= c.level %>"><%= c.levelName %></span></td>
+                  <td><%= c.position %></td>
+                  <td><%= c.lesson_count %></td>
+                  <td class="row-actions">
+                    <a class="btn btn-ghost btn-sm" href="/quan-tri/bai/moi?chuong=<%= c.id %>"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Thêm bài</a>
+                    <a class="btn btn-ghost btn-sm" href="/quan-tri/chuong/<%= c.id %>"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Sửa</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+    <aside class="card form-card">
+      <h2 class="h3">Tạo chương mới</h2>
+      <form method="post" action="/quan-tri/chuong">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <%- include('chapter-fields', { values: values, errors: errors }) %>
+        <button class="btn btn-primary btn-block" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Tạo chương</button>
+      </form>
+    </aside>
+  </div>
+</section>
+<%- include('../partials/foot') %>

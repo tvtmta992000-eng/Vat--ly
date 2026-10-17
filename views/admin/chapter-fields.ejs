@@ -1,0 +1,22 @@
+<div class="field <%= errors.level ? 'has-error' : '' %>">
+  <label for="level">Cấp học</label>
+  <select id="level" name="level" required>
+    <option value="">— Chọn cấp học —</option>
+    <% levels.forEach(function (l) { %><option value="<%= l.slug %>" <%= values.level === l.slug ? 'selected' : '' %>><%= l.name %> (<%= l.grades %>)</option><% }) %>
+  </select>
+  <% if (errors.level) { %><p class="field-error"><%= errors.level %></p><% } %>
+</div>
+<div class="field <%= errors.title ? 'has-error' : '' %>">
+  <label for="title">Tên chương</label>
+  <input id="title" name="title" type="text" required value="<%= values.title || '' %>" placeholder="Ví dụ: Chương 3. Điện học">
+  <% if (errors.title) { %><p class="field-error"><%= errors.title %></p><% } %>
+</div>
+<div class="field">
+  <label for="description">Mô tả ngắn <span class="optional">(không bắt buộc)</span></label>
+  <textarea id="description" name="description" rows="3"><%= values.description || '' %></textarea>
+</div>
+<div class="field">
+  <label for="position">Thứ tự hiển thị</label>
+  <input id="position" name="position" type="number" inputmode="numeric" value="<%= values.position || 0 %>" aria-describedby="position-hint">
+  <p class="field-hint" id="position-hint">Số nhỏ hiển thị trước.</p>
+</div>
