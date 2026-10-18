@@ -1,0 +1,38 @@
+<%# Khối phân tích kết quả bài làm (dùng cho học viên và giáo viên) %>
+<% if (analysis) { %>
+  <div class="grid grid-2 analysis-grid">
+    <section class="card">
+      <h2 class="h3">Nhận xét</h2>
+      <ul class="simple-list feedback-list"><% analysis.feedback.forEach(function (f) { %><li><%= f %></li><% }) %></ul>
+      <h3 class="h3 sub-head">Theo dạng câu</h3>
+      <ul class="mastery-list"><% analysis.byType.forEach(function (g) { const tone = g.pct >= 80 ? 'good' : g.pct >= 50 ? 'ok' : 'low'; %>
+        <li><span class="mastery-name"><%= g.label %></span><span class="mastery-bar"><span class="tone-<%= tone %>" style="width: <%= Math.max(2, g.pct) %>%"></span></span><span class="mastery-pct score is-<%= tone %>"><%= g.pct %>%</span></li>
+      <% }) %></ul>
+      <h3 class="h3 sub-head">Theo mức độ</h3>
+      <ul class="mastery-list"><% analysis.byDifficulty.forEach(function (g) { const tone = g.pct >= 80 ? 'good' : g.pct >= 50 ? 'ok' : 'low'; %>
+        <li><span class="mastery-name"><%= g.label %></span><span class="mastery-bar"><span class="tone-<%= tone %>" style="width: <%= Math.max(2, g.pct) %>%"></span></span><span class="mastery-pct score is-<%= tone %>"><%= g.pct %>%</span></li>
+      <% }) %></ul>
+    </section>
+    <section class="card">
+      <h2 class="h3">Theo chủ đề kiến thức</h2>
+      <ul class="mastery-list"><% analysis.byTopic.slice().sort(function (x, y) { return y.pct - x.pct; }).forEach(function (g) { const tone = g.pct >= 80 ? 'good' : g.pct >= 50 ? 'ok' : 'low'; %>
+        <li><span class="mastery-name"><%= g.label %> <small class="muted">(<%= g.count %> câu)</small></span><span class="mastery-bar"><span class="tone-<%= tone %>" style="width: <%= Math.max(2, g.pct) %>%"></span></span><span class="mastery-pct score is-<%= tone %>"><%= g.pct %>%</span></li>
+      <% }) %></ul>
+      <div class="sw-grid">
+        <div><h3 class="h3 sub-head">Điểm mạnh</h3><% if (analysis.strengths.length) { %><ul class="tag-list"><% analysis.strengths.forEach(function (k) { %><li class="tag tag-good"><%= getTopic(k).name %></li><% }) %></ul><% } else { %><p class="muted small">Chưa có chủ đề đạt từ 80%.</p><% } %></div>
+        <div><h3 class="h3 sub-head">Cần cải thiện</h3><% if (analysis.weaknesses.length) { %><ul class="tag-list"><% analysis.weaknesses.forEach(function (k) { %><li class="tag tag-low"><%= getTopic(k).name %></li><% }) %></ul><% } else { %><p class="muted small">Không có chủ đề dưới 50%.</p><% } %></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="h3">Lỗi thường gặp trong bài</h2>
+      <% if (!analysis.errorSummary.length) { %><p class="muted">Không có lỗi — xuất sắc!</p><% } else { %>
+        <ul class="simple-list error-list"><% analysis.errorSummary.forEach(function (e) { %><li><span><%= e.label %></span><span class="badge"><%= e.count %> câu</span></li><% }) %></ul>
+        <details class="help"><summary>Chi tiết từng câu</summary><ul class="help-body small error-detail"><% analysis.errors.forEach(function (e) { %><li><a href="#cau-pos-<%= e.position %>">Câu thứ <%= e.position %></a>: <%= e.message %></li><% }) %></ul></details>
+      <% } %>
+    </section>
+    <section class="card">
+      <h2 class="h3">Gợi ý phương pháp học</h2>
+      <ul class="simple-list method-list"><% analysis.methods.forEach(function (m) { %><li><svg class="icon icon-primary" aria-hidden="true"><use href="#i-target"/></svg><span><%= m %></span></li><% }) %></ul>
+    </section>
+  </div>
+<% } %>

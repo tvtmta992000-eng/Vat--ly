@@ -1,0 +1,27 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Giao bài' }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="toolbar">
+      <p class="muted">Theo dõi tiến độ, chấm và điều chỉnh kết quả các bài đã giao.</p>
+      <a class="btn btn-primary btn-sm" href="/quan-tri/giao-bai/moi"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Giao bài mới</a>
+    </div>
+    <% if (!assignments.length) { %>
+      <div class="empty-state"><p>Chưa giao bài nào. Tạo <a href="/quan-tri/lop">lớp</a> và <a href="/quan-tri/de">đề</a> trước, sau đó giao bài.</p></div>
+    <% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th scope="col">Bài</th><th scope="col">Giao cho</th><th scope="col">Mở / Hạn nộp</th><th scope="col">Đã nộp</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+        <tbody><% assignments.forEach(function (a) { const total = a.direct_targets || a.class_size || 0; const overdue = a.due_at && new Date(a.due_at) < new Date(); %>
+          <tr>
+            <td><a href="/quan-tri/giao-bai/<%= a.id %>"><strong><%= a.title %></strong></a><div class="muted small">Đề: <%= a.exam_title %></div></td>
+            <td class="small"><%= a.class_name || '' %><%= a.direct_targets ? (a.class_name ? ' · ' : '') + a.direct_targets + ' học viên chọn riêng' : '' %></td>
+            <td class="small"><%= a.open_at ? time.formatDateTime(a.open_at) : 'Mở ngay' %><br><span class="<%= overdue ? 'text-danger' : '' %>"><%= a.due_at ? time.formatDateTime(a.due_at) : 'Không hạn' %></span></td>
+            <td><span class="progress-inline"><span class="progress-bar"><span style="width: <%= total ? Math.round(a.submitted / total * 100) : 0 %>%"></span></span><%= a.submitted %>/<%= total %></span></td>
+            <td class="row-actions"><a class="btn btn-ghost btn-sm" href="/quan-tri/giao-bai/<%= a.id %>"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Theo dõi</a></td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

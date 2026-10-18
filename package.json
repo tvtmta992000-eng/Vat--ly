@@ -10,7 +10,8 @@
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
     "test": "node --test",
-    "import": "node scripts/import.js"
+    "import": "node scripts/import.js",
+    "nap-ngan-hang": "node scripts/nap-ngan-hang.js"
   },
   "engines": {
     "node": ">=18"
@@ -29,13 +30,19 @@
     "express-session": "^1.19.0",
     "helmet": "^8.3.0",
     "katex": "^0.19.0",
+    "mammoth": "^1.13.0",
     "marked": "^18.1.1",
+    "multer": "^2.4.0",
     "mysql2": "^3.24.6",
+    "pdf-parse": "^1.1.1",
     "sanitize-html": "^2.18.1"
   },
   "overrides": {
     "express-mysql-session": {
       "mysql2": "$mysql2"
+    },
+    "mammoth": {
+      "argparse": "^2.0.1"
     }
   }
 }

@@ -1,0 +1,27 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Báo cáo học tập' }) %>
+<section class="section section-tight">
+  <div class="container">
+    <h2 class="section-title">Tổng quan các lớp</h2>
+    <% if (!reports.length) { %><div class="empty-state"><p>Chưa có lớp nào đang hoạt động. <a href="/quan-tri/lop">Tạo lớp</a>.</p></div><% } else { %>
+      <div class="grid grid-2">
+        <% reports.forEach(function (r) { %>
+          <section class="card">
+            <div class="toolbar"><h3 class="h3"><a href="/quan-tri/lop/<%= r.cls.id %>/bao-cao"><%= r.cls.name %></a></h3><a class="btn btn-ghost btn-sm" href="/quan-tri/lop/<%= r.cls.id %>/bao-cao?csv=1">CSV</a></div>
+            <p class="small muted"><%= r.students %> học viên · <%= r.assignments %> bài giao · điểm TB <strong><%= r.avg === null ? '—' : score(r.avg) %></strong></p>
+            <% if (r.weakest.length) { %><p class="small">Chủ đề yếu nhất: <%= r.weakest.map(function (m) { return m.label + ' (' + m.pct + '%)'; }).join(', ') %></p><% } %>
+            <% if (r.attention.length) { %><p class="small text-danger">Cần quan tâm: <%= r.attention.slice(0, 5).map(function (s) { return s.name; }).join(', ') %><%= r.attention.length > 5 ? '…' : '' %></p><% } %>
+          </section>
+        <% }) %>
+      </div>
+    <% } %>
+    <h2 class="section-title section-gap">Học viên</h2>
+    <% if (!students.length) { %><p class="muted">Chưa có học viên.</p><% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th scope="col">Họ tên</th><th scope="col">Email</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+        <tbody><% students.forEach(function (s) { %><tr><td><%= s.name %></td><td class="small"><%= s.email %></td><td class="row-actions"><a class="btn btn-ghost btn-sm" href="/quan-tri/hoc-vien/<%= s.id %>">Báo cáo cá nhân</a></td></tr><% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

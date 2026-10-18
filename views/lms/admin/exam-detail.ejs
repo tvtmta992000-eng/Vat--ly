@@ -1,0 +1,51 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: exam.title, crumbs: [{ href: '/quan-tri/de', label: 'Đề' }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="toolbar">
+      <p class="muted"><%= KINDS[exam.kind] %> · <%= parts.reduce(function (s, p) { return s + p.items.length; }, 0) %> câu · <%= score(total) %> điểm · <%= exam.duration_min ? exam.duration_min + ' phút' : 'không giới hạn thời gian' %></p>
+      <div class="form-actions">
+        <a class="btn btn-ghost btn-sm" href="/quan-tri/de/<%= exam.id %>/xem?dap_an=0">Xem/in đề</a>
+        <a class="btn btn-ghost btn-sm" href="/quan-tri/de/<%= exam.id %>/xem">Đề kèm đáp án</a>
+        <form method="post" action="/quan-tri/de/<%= exam.id %>/nhan-ban"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit">Nhân bản</button></form>
+        <% if (!hasAttempts) { %><a class="btn btn-secondary btn-sm" href="/quan-tri/ngan-hang?them_vao=<%= exam.id %>"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Thêm câu từ ngân hàng</a><% } %>
+        <a class="btn btn-primary btn-sm" href="/quan-tri/giao-bai/moi?de=<%= exam.id %>"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg>Giao bài</a>
+      </div>
+    </div>
+    <% if (hasAttempts) { %><div class="alert alert-info">Đề đã có học viên làm: chỉ sửa được nội dung/đáp án từng câu (hệ thống tự chấm lại). Muốn thay đổi cấu trúc, hãy <strong>Nhân bản</strong> đề.</div><% } %>
+
+    <div class="admin-split">
+      <div class="exam-sheet">
+        <% if (!parts.length) { %><div class="empty-state"><p>Đề chưa có câu nào. <a href="/quan-tri/ngan-hang?them_vao=<%= exam.id %>">Thêm câu từ ngân hàng</a>.</p></div><% } %>
+        <%- include('../partials/exam-items', { parts: parts, mode: 'manage', showAnswers: true, answers: {} }) %>
+      </div>
+      <aside class="stack">
+        <form class="card form-card" method="post" action="/quan-tri/de/<%= exam.id %>">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <h2 class="h3">Thông tin đề</h2>
+          <div class="field"><label for="title">Tên đề</label><input id="title" name="title" type="text" value="<%= exam.title %>" required maxlength="200"></div>
+          <div class="field"><label for="kind">Loại</label><select id="kind" name="kind"><% Object.keys(KINDS).forEach(function (k) { %><option value="<%= k %>" <%= exam.kind === k ? 'selected' : '' %>><%= KINDS[k] %></option><% }) %></select></div>
+          <div class="field"><label for="duration_min">Thời gian (phút)</label><input id="duration_min" name="duration_min" type="number" min="1" max="600" value="<%= exam.duration_min || '' %>"></div>
+          <div class="field"><label for="description">Ghi chú</label><textarea id="description" name="description" rows="2"><%= exam.description || '' %></textarea></div>
+          <button class="btn btn-primary btn-block" type="submit">Lưu</button>
+        </form>
+        <section class="card">
+          <h2 class="h3">Đã giao (<%= assignments.length %>)</h2>
+          <% if (!assignments.length) { %><p class="muted small">Chưa giao.</p><% } else { %>
+            <ul class="simple-list small"><% assignments.forEach(function (a) { %><li><a href="/quan-tri/giao-bai/<%= a.id %>"><%= a.title %></a><span class="muted"><%= a.class_name || 'Giao riêng' %></span></li><% }) %></ul>
+          <% } %>
+        </section>
+        <% if (history.length) { %>
+          <section class="card">
+            <h2 class="h3">Lịch sử chỉnh sửa</h2>
+            <ul class="simple-list small"><% history.forEach(function (h) { %><li><%= h.action %> · <%= h.user_name || 'Hệ thống' %><span class="muted"><%= time.formatDateTime(h.created_at) %></span></li><% }) %></ul>
+          </section>
+        <% } %>
+        <% if (!assignments.length) { %>
+          <form method="post" action="/quan-tri/de/<%= exam.id %>/xoa" data-confirm="Xoá đề này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-text btn-sm" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá đề</button></form>
+        <% } %>
+      </aside>
+    </div>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

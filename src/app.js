@@ -63,7 +63,7 @@ app.get('/vendor/fonts.css', (req, res) => {
   if (config.isProduction) res.set('Cache-Control', 'public, max-age=604800');
   res.send(fontsCss);
 });
-app.use(express.urlencoded({ extended: false, limit: '2mb' }));
+app.use(express.urlencoded({ extended: false, limit: '4mb', parameterLimit: 20000 }));
 app.use(express.json({ limit: '1mb' }));
 
 // Giá trị mặc định cho giao diện, để trang lỗi vẫn hiển thị được kể cả khi session/DB gặp sự cố.
@@ -113,7 +113,9 @@ app.use(csrf);
 app.use('/', require('./routes/public'));
 app.use('/', require('./routes/auth'));
 app.use('/', require('./routes/learning'));
+app.use('/', require('./routes/lms-student'));
 app.use('/quan-tri', require('./routes/admin'));
+app.use('/quan-tri', require('./routes/lms-admin'));
 
 app.use((req, res) => {
   res.status(404).render('error', { title: 'Không tìm thấy trang', message: 'Trang bạn tìm không tồn tại hoặc đã bị xoá.' });

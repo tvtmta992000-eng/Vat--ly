@@ -1,0 +1,46 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: title, crumbs: locals.exam ? [{ href: '/quan-tri/de', label: 'Đề' }, { href: '/quan-tri/de/' + exam.id, label: exam.title }] : [{ href: '/quan-tri/ngan-hang', label: 'Ngân hàng câu hỏi' }] }) %>
+<section class="section section-tight">
+  <div class="container admin-split">
+    <form class="card form-card" method="post" action="<%= formAction %>" data-question-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (errors.length) { %><div class="alert alert-error" role="alert"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div><% } %>
+      <% if (locals.examItem) { %>
+        <div class="alert alert-info">Bạn đang sửa bản sao của câu trong đề này — ngân hàng không bị thay đổi.<% if (locals.hasAttempts) { %> <strong>Đề đã có học viên làm: sau khi lưu, hệ thống tự chấm lại câu này cho mọi bài đã nộp</strong> (điểm đã chỉnh tay được giữ).<% } %></div>
+      <% } %>
+      <%- include('../partials/question-fields', { v: values, p: '', noTemplate: Boolean(locals.examItem) }) %>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Lưu câu hỏi</button>
+        <% if (!question && !locals.examItem) { %><button class="btn btn-secondary" type="submit" name="another" value="1">Lưu và thêm câu khác</button><% } %>
+        <a class="btn btn-ghost" href="<%= back %>">Quay lại</a>
+      </div>
+    </form>
+    <aside class="stack">
+      <% if (preview) { %>
+        <section class="card">
+          <h2 class="h3">Xem trước</h2>
+          <% if (preview.view.contextHtml) { %><div class="exam-context"><div class="math-content prose"><%- preview.view.contextHtml %></div></div><% } %>
+          <div class="math-content prose"><%- preview.view.stemHtml %></div>
+          <% if (preview.type === 'mcq') { %><ol class="admin-options" type="A"><% preview.view.optionsHtml.forEach(function (o, i) { %><li class="<%= preview.data.answer === i ? 'is-answer' : '' %>"><%= 'ABCD'[i] %>. <span class="math-content"><%- o %></span></li><% }) %></ol><% } %>
+          <% if (preview.type === 'tf') { %><ul class="admin-options"><% preview.view.statementsHtml.forEach(function (o, i) { %><li><%= 'abcd'[i] %>) <span class="math-content"><%- o %></span> — <strong><%= preview.data.answers[i] ? 'Đ' : 'S' %></strong></li><% }) %></ul><% } %>
+          <p class="answer-key">Đáp án: <strong><%= preview.view.answerText %></strong></p>
+          <% if (preview.view.explanationHtml) { %><div class="explanation math-content"><%- preview.view.explanationHtml %></div><% } %>
+        </section>
+      <% } %>
+      <% if (question) { %>
+        <section class="card">
+          <h2 class="h3">Thông tin</h2>
+          <p class="small">Đã dùng trong <strong><%= question.usage %></strong> đề. Sửa ở đây không làm thay đổi các đề đã tạo.</p>
+          <% if (history.length) { %>
+            <h3 class="h3">Lịch sử chỉnh sửa</h3>
+            <ul class="simple-list small"><% history.forEach(function (h) { %><li><%= h.action === 'create' ? 'Tạo' : h.action === 'update' ? 'Sửa' : h.action %> · <%= h.user_name || 'Hệ thống' %><span class="muted"><%= time.formatDateTime(h.created_at) %></span></li><% }) %></ul>
+          <% } %>
+          <form method="post" action="/quan-tri/ngan-hang/<%= question.id %>/xoa" data-confirm="Xoá câu hỏi này khỏi ngân hàng?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-text btn-sm" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá câu hỏi</button>
+          </form>
+        </section>
+      <% } %>
+    </aside>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

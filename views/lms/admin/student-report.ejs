@@ -1,0 +1,28 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: student.name, crumbs: [{ href: '/quan-tri/bao-cao', label: 'Báo cáo' }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="toolbar">
+      <p class="muted"><%= student.email %> · Lớp: <%= classes.map(function (c) { return c.name; }).join(', ') || '—' %> · <%= attempts.length %> bài đã nộp</p>
+      <a class="btn btn-secondary btn-sm" href="/quan-tri/hoc-vien/<%= student.id %>?csv=1">Xuất lịch sử (CSV)</a>
+    </div>
+    <div class="grid grid-2">
+      <section class="card"><h2 class="h3">Tiến bộ (thang 10)</h2><%- chart || '<p class="muted">Chưa có bài nào.</p>' %></section>
+      <section class="card"><h2 class="h3">Mức độ nắm vững theo chủ đề</h2><%- include('../partials/mastery', { mastery: mastery }) %></section>
+      <section class="card"><h2 class="h3">Lỗi thường gặp</h2><%- include('../partials/errors', { errorTotals: errorTotals }) %></section>
+    </div>
+    <h2 class="section-title section-gap">Lịch sử làm bài</h2>
+    <% if (!attempts.length) { %><p class="muted">Chưa có bài nào.</p><% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th scope="col">Bài</th><th scope="col">Nộp lúc</th><th scope="col">Điểm</th><th scope="col"><span class="sr-only">Xem</span></th></tr></thead>
+        <tbody><% attempts.forEach(function (t) { const s10 = t.score / t.max_score * 10; %>
+          <tr><td><%= t.title %><% if (t.is_auto_practice) { %> <span class="badge">Luyện tập</span><% } %><% if (t.is_late) { %> <span class="badge badge-warning">Trễ</span><% } %></td>
+            <td class="small"><%= time.formatDateTime(t.submitted_at) %></td>
+            <td><span class="score <%= s10 >= 8 ? 'is-good' : s10 >= 5 ? 'is-ok' : 'is-low' %>"><%= score(t.score) %>/<%= score(t.max_score) %></span></td>
+            <td class="row-actions"><a class="btn btn-ghost btn-sm" href="/quan-tri/bai-lam/<%= t.id %>">Xem bài</a></td></tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

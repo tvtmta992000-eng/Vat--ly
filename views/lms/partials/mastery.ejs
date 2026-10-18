@@ -1,0 +1,13 @@
+<% if (!mastery.length) { %>
+  <p class="muted">Chưa có dữ liệu.</p>
+<% } else { %>
+  <ul class="mastery-list">
+    <% mastery.forEach(function (m) { const tone = m.pct >= 80 ? 'good' : m.pct >= 50 ? 'ok' : 'low'; %>
+      <li>
+        <span class="mastery-name"><%= m.label %></span>
+        <span class="mastery-bar" role="progressbar" aria-label="<%= m.label %>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= m.pct %>"><span class="tone-<%= tone %>" style="width: <%= Math.max(2, m.pct) %>%"></span></span>
+        <span class="mastery-pct score is-<%= tone %>"><%= m.pct %>%</span>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>

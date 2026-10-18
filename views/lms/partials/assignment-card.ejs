@@ -1,0 +1,13 @@
+<li class="card assign-card status-border-<%= a.status %>">
+  <div class="assign-card-head">
+    <a class="assign-title" href="/hoc-tap/bai/<%= a.id %>"><%= a.title %></a>
+    <span class="status status-<%= a.status %>"><%= STATUS_LABELS[a.status] %></span>
+  </div>
+  <p class="small muted">
+    <%= a.class_name ? 'Lớp ' + a.class_name : (a.is_auto_practice ? 'Luyện tập cá nhân' : 'Giao riêng') %>
+    <% if (a.due_at) { %> · Hạn: <strong><%= time.formatDateTime(a.due_at) %></strong><% } %>
+    <% if (a.open_at && new Date(a.open_at) > new Date()) { %> · Mở lúc <%= time.formatDateTime(a.open_at) %><% } %>
+    <% if (a.duration_min || a.exam_duration) { %> · <%= a.duration_min || a.exam_duration %> phút<% } %>
+  </p>
+  <% if (a.counted) { %><p class="small">Điểm: <span class="score <%= a.score10 >= 8 ? 'is-good' : a.score10 >= 5 ? 'is-ok' : 'is-low' %>"><%= score(a.counted.score) %>/<%= score(a.counted.max_score) %></span> · đã nộp <%= a.attemptsUsed %> lần</p><% } %>
+</li>

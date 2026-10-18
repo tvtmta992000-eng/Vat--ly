@@ -1,0 +1,18 @@
+<%- include('../../partials/head') %>
+<section class="section section-tight print-sheet">
+  <div class="container narrow">
+    <div class="toolbar no-print">
+      <a class="btn btn-ghost btn-sm" href="/quan-tri/de/<%= exam.id %>"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>Về trang đề</a>
+      <div class="form-actions">
+        <a class="btn btn-ghost btn-sm" href="?dap_an=<%= showAnswers ? 0 : 1 %>"><%= showAnswers ? 'Ẩn đáp án' : 'Hiện đáp án' %></a>
+        <button class="btn btn-primary btn-sm" type="button" data-print>In đề</button>
+      </div>
+    </div>
+    <header class="print-head">
+      <h1><%= exam.title %></h1>
+      <p><%= KINDS[exam.kind] %> · <%= score(total) %> điểm<%= exam.duration_min ? ' · Thời gian làm bài: ' + exam.duration_min + ' phút' : '' %></p>
+    </header>
+    <%- include('../partials/exam-items', { parts: parts, mode: 'print', showAnswers: showAnswers, answers: {} }) %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

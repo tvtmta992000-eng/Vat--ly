@@ -1,0 +1,14 @@
+<section class="page-head">
+  <div class="container">
+    <% if (locals.crumbs) { %>
+      <nav class="breadcrumb" aria-label="Đường dẫn"><% crumbs.forEach(function (c) { %><a href="<%= c.href %>"><%= c.label %></a><span aria-hidden="true">/</span><% }) %><span aria-current="page"><%= heading %></span></nav>
+    <% } %>
+    <h1><%= heading %></h1>
+    <% if (locals.lead) { %><p class="lead"><%= lead %></p><% } %>
+    <nav class="admin-nav" aria-label="Học tập">
+      <a href="/hoc-tap" <% if (currentPath === '/hoc-tap' || currentPath.startsWith('/hoc-tap/bai') || currentPath.startsWith('/hoc-tap/ket-qua')) { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Bài của tôi</a>
+      <a href="/hoc-tap/luyen-tap" <% if (currentPath === '/hoc-tap/luyen-tap') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg>Tự luyện tập</a>
+      <a href="/hoc-tap/tien-bo" <% if (currentPath === '/hoc-tap/tien-bo') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Tiến bộ</a>
+    </nav>
+  </div>
+</section>

@@ -1,0 +1,59 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Duyệt đề mẫu', crumbs: [{ href: '/quan-tri/de-mau', label: 'Đề mẫu' }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="card">
+      <h2 class="h3"><%= up.filename %></h2>
+      <dl class="meta-grid">
+        <div><dt>Tiêu đề nhận được</dt><dd><%= analysis.title || '—' %></dd></div>
+        <div><dt>Thời gian</dt><dd><%= analysis.durationMin ? analysis.durationMin + ' phút' : 'Không ghi' %></dd></div>
+        <div><dt>Số câu</dt><dd><%= questions.length %> (<%= ['mcq', 'tf', 'short'].map(function (t) { return questions.filter(function (q) { return q.type === t; }).length + ' ' + TYPES[t].toLowerCase(); }).join(', ') %>)</dd></div>
+        <div><dt>Đáp án đọc được</dt><dd><%= analysis.keyFound %>/<%= questions.length %></dd></div>
+        <div><dt>Thang điểm (mặc định TN THPT)</dt><dd><%= score(summary.points) %> điểm</dd></div>
+      </dl>
+      <% if (analysis.warnings.length) { %><ul class="warning-list"><% analysis.warnings.forEach(function (w) { %><li><%= w %></li><% }) %></ul><% } %>
+      <% if (analysis.saved) { %><div class="alert alert-success">Đề này đã được lưu (<%= analysis.saved.questions %> câu) lúc <%= time.formatDateTime(analysis.saved.at) %>. Lưu lại sẽ thêm bản mới vào ngân hàng.</div><% } %>
+    </div>
+
+    <h2 class="section-title section-gap">Cấu trúc phát hiện được</h2>
+    <div class="table-wrap"><table class="table table-compact">
+      <thead><tr><th scope="col">Phần</th><th scope="col">Dạng</th><th scope="col">Điểm/câu</th><th scope="col">Phân bố (chủ đề · mức độ · số câu)</th></tr></thead>
+      <tbody><% structure.parts.forEach(function (p) { %>
+        <tr><td><%= p.part %></td><td><%= TYPES[p.type] %></td><td><%= score(p.points) %></td>
+          <td class="small"><%= p.slots.map(function (s) { return (s.topic ? getTopic(s.topic).name : 'Tự chọn') + ' · ' + (DIFFICULTIES[s.difficulty] || 'Bất kì') + ' · ' + s.count; }).join(' | ') %></td></tr>
+      <% }) %></tbody>
+    </table></div>
+
+    <form method="post" action="/quan-tri/de-mau/<%= up.id %>" class="section-gap" data-question-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <h2 class="section-title">Các câu hỏi — kiểm tra và sửa</h2>
+      <% questions.forEach(function (q, i) { %>
+        <fieldset class="card review-item <%= q.notes.length ? 'has-notes' : '' %>" id="rq-<%= i %>">
+          <legend class="sr-only">Câu <%= i + 1 %></legend>
+          <div class="review-item-head">
+            <label class="check"><input type="checkbox" name="q<%= i %>_keep" value="1" checked> <strong>Phần <%= q.part %> – Câu <%= q.number %></strong></label>
+            <label class="small" for="q<%= i %>_points">Điểm</label>
+            <input id="q<%= i %>_points" class="input-sm" name="q<%= i %>_points" inputmode="decimal" value="<%= score({ mcq: 0.25, tf: 1, short: 0.25 }[q.type]) %>">
+          </div>
+          <% if (q.notes.length) { %><ul class="warning-list"><% q.notes.forEach(function (n) { %><li><%= n %></li><% }) %></ul><% } %>
+          <%- include('../partials/question-fields', { v: q.values, p: 'q' + i + '_', noTemplate: true, compact: true }) %>
+        </fieldset>
+      <% }) %>
+
+      <section class="card form-card section-gap">
+        <h2 class="h3">Lưu và tạo đề</h2>
+        <p class="small">Các câu được đánh dấu sẽ lưu vào ngân hàng (nguồn: "<%= up.filename %>").</p>
+        <label class="check"><input type="checkbox" name="make_blueprint" value="1" checked> Tạo <strong>khung đề</strong> cùng cấu trúc, phân bố chủ đề, mức độ và thang điểm</label>
+        <div class="form-grid">
+          <div class="field"><label for="blueprint_name">Tên khung đề</label><input id="blueprint_name" name="blueprint_name" type="text" value="<%= 'Khung đề theo ' + (analysis.title || up.filename) %>" maxlength="200"></div>
+          <div class="field"><label for="duration_min">Thời gian (phút)</label><input id="duration_min" name="duration_min" type="number" min="1" max="600" value="<%= analysis.durationMin || '' %>"></div>
+          <div class="field"><label for="kind">Loại</label><select id="kind" name="kind"><option value="exam">Đề thi</option><option value="test">Kiểm tra</option><option value="practice">Luyện tập</option></select></div>
+          <div class="field"><label for="versions">Sinh ngay số đề tương tự</label><select id="versions" name="versions"><% [0, 1, 2, 3, 4, 5].forEach(function (n) { %><option value="<%= n %>" <%= n === 1 ? 'selected' : '' %>><%= n %></option><% }) %></select></div>
+        </div>
+        <label class="check"><input type="checkbox" name="make_original" value="1"> Lưu luôn <strong>đề gốc</strong> (đúng các câu này) để giao bài</label>
+        <div class="form-actions sticky-actions"><button class="btn btn-primary btn-lg" type="submit">Lưu vào ngân hàng</button></div>
+      </section>
+    </form>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

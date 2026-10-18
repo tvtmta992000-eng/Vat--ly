@@ -1,0 +1,40 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Bài làm của ' + attempt.student_name, crumbs: a.is_auto_practice ? [{ href: '/quan-tri/hoc-vien/' + attempt.user_id, label: attempt.student_name }] : [{ href: '/quan-tri/giao-bai', label: 'Giao bài' }, { href: '/quan-tri/giao-bai/' + a.id, label: a.title }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="card attempt-summary">
+      <div>
+        <p class="muted small"><%= a.title %> · <%= attempt.student_email %></p>
+        <% if (attempt.status === 'submitted') { const s10 = attempt.score / attempt.max_score * 10; %>
+          <p class="big-score score <%= s10 >= 8 ? 'is-good' : s10 >= 5 ? 'is-ok' : 'is-low' %>"><%= score(attempt.score) %><small>/<%= score(attempt.max_score) %></small></p>
+          <p class="small">Bắt đầu <%= time.formatDateTime(attempt.started_at) %> · nộp <%= time.formatDateTime(attempt.submitted_at) %> (<%= time.formatDuration((new Date(attempt.submitted_at) - new Date(attempt.started_at)) / 1000) %>)
+            <% if (attempt.is_late) { %><span class="badge badge-warning">Nộp trễ</span><% } %><% if (attempt.adjusted) { %><span class="badge badge-warning">Đã chỉnh điểm</span><% } %></p>
+        <% } else { %>
+          <p><span class="status status-doing">Đang làm</span> — bắt đầu <%= time.formatDateTime(attempt.started_at) %>. Dưới đây là câu trả lời đang lưu tạm (chưa tính điểm chính thức).</p>
+        <% } %>
+      </div>
+      <% if (others.length > 1) { %>
+        <nav aria-label="Các lần làm"><p class="label">Các lần làm</p><ul class="simple-list small"><% others.forEach(function (o, i) { %><li><% if (o.id === attempt.id) { %><strong>Lần <%= i + 1 %></strong><% } else { %><a href="/quan-tri/bai-lam/<%= o.id %>">Lần <%= i + 1 %></a><% } %><span class="muted"><%= o.status === 'submitted' ? score(o.score) + '/' + score(o.max_score) : 'đang làm' %></span></li><% }) %></ul></nav>
+      <% } %>
+    </div>
+
+    <%- include('../partials/analysis', { analysis: analysis }) %>
+
+    <h2 class="section-title section-gap">Chi tiết và chấm điểm</h2>
+    <p class="muted small">Điểm tự động có thể chỉnh từng câu, bắt buộc ghi lí do; mọi thay đổi được lưu trong lịch sử chấm.</p>
+    <div class="exam-sheet">
+      <%- include('../partials/exam-items', { parts: parts, mode: 'review', showAnswers: true, answers: {} }) %>
+    </div>
+
+    <section class="card section-gap">
+      <h2 class="h3">Lịch sử chấm điểm</h2>
+      <% if (!audit.length) { %><p class="muted small">Chưa có điều chỉnh nào.</p><% } else { %>
+        <div class="table-wrap"><table class="table table-compact">
+          <thead><tr><th scope="col">Thời gian</th><th scope="col">Người sửa</th><th scope="col">Câu</th><th scope="col">Điểm cũ → mới</th><th scope="col">Lí do</th></tr></thead>
+          <tbody><% audit.forEach(function (g) { %><tr><td class="small"><%= time.formatDateTime(g.created_at) %></td><td class="small"><%= g.user_name || 'Hệ thống' %></td><td><%= g.position || '' %></td><td><%= score(g.old_points) %> → <%= score(g.new_points) %></td><td class="small"><%= g.reason || '' %></td></tr><% }) %></tbody>
+        </table></div>
+      <% } %>
+    </section>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

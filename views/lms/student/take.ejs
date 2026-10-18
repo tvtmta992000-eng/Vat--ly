@@ -1,0 +1,40 @@
+<%- include('../../partials/head') %>
+<section class="section section-tight">
+  <div class="container exam-layout">
+    <form class="exam-sheet" id="exam-form" method="post" action="/hoc-tap/lam/<%= attempt.id %>/nop"
+          data-exam data-save-url="/hoc-tap/lam/<%= attempt.id %>/luu" data-deadline="<%= deadlineMs || '' %>" data-due="<%= dueMs || '' %>" data-started="<%= new Date(attempt.started_at).getTime() %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <header class="exam-header card">
+        <p class="muted small"><a href="/hoc-tap/bai/<%= a.id %>"><%= a.title %></a></p>
+        <h1 class="h2"><%= a.exam_title %></h1>
+        <p class="small muted"><%= count %> câu · <%= score(total) %> điểm<%= a.instructions ? ' · ' + a.instructions : '' %></p>
+      </header>
+      <%- include('../partials/exam-items', { parts: parts, mode: 'take', showAnswers: false, answers: answers }) %>
+      <div class="exam-submit card">
+        <p class="small muted">Kiểm tra lại các câu chưa làm ở bảng bên cạnh trước khi nộp.</p>
+        <button class="btn btn-primary btn-lg" type="submit" data-submit>Nộp bài</button>
+      </div>
+    </form>
+    <aside class="exam-panel card" aria-label="Bảng điều khiển bài làm">
+      <div class="exam-timer" data-timer aria-live="polite">
+        <span class="label"><%= deadlineMs ? 'Thời gian còn lại' : 'Thời gian làm bài' %></span>
+        <strong data-timer-value>—</strong>
+        <span class="small" data-timer-note></span>
+      </div>
+      <p class="label">Câu trả lời</p>
+      <div class="exam-nav" data-exam-nav>
+        <% parts.forEach(function (part, pi) { %>
+          <p class="small muted">Phần <%= pi + 1 %></p>
+          <div class="exam-nav-grid">
+            <% part.items.forEach(function (item) { %><a href="#cau-<%= item.id %>" data-nav-for="<%= item.id %>"><%= item.number %></a><% }) %>
+          </div>
+        <% }) %>
+      </div>
+      <p class="small" data-progress>Đã làm 0/<%= count %></p>
+      <p class="small muted" data-save-status>Câu trả lời được lưu tự động.</p>
+      <button class="btn btn-primary btn-block" type="submit" form="exam-form" data-submit>Nộp bài</button>
+    </aside>
+  </div>
+</section>
+<script defer src="/js/exam.js"></script>
+<%- include('../../partials/foot') %>

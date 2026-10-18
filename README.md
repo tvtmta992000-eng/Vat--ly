@@ -9,6 +9,7 @@ Website học tập môn Vật lý cho học sinh THCS, THPT, ôn thi ĐH/HSG v�
 - 10 mô phỏng tương tác: ném xiên, va chạm, mặt phẳng nghiêng, con lắc đơn, cộng hưởng, giao thoa sóng, khí lí tưởng, định luật Ohm, cảm ứng điện từ, thấu kính
 - Tài khoản học sinh, lưu điểm và tiến độ (đạt ≥ 80% tự đánh dấu hoàn thành bài)
 - Trang quản trị cho giáo viên: soạn bài bằng Markdown + LaTeX có xem trước trực tiếp, quản lý chương, câu hỏi, phân quyền người dùng
+- **Hệ thống quản trị học tập** (xem mục bên dưới): lớp học, ngân hàng câu hỏi, phân tích đề mẫu, sinh đề tự động, giao bài, chấm và phân tích kết quả, luyện tập cá nhân hoá, báo cáo
 
 **Công nghệ:** Node.js 18+ · Express 5 · EJS · MySQL/MariaDB. KaTeX và font chữ được phục vụ từ chính server, không cần CDN.
 
@@ -146,6 +147,39 @@ cd /var/www/vatly && sudo -u vatly npm run import -- content/vat-ly-10.js conten
 
 > Dùng `--cap-nhat` cẩn thận: chỉnh sửa trên trang Quản trị đối với các bài đó sẽ bị thay bằng nội dung trong file.
 
+## Hệ thống quản trị học tập
+
+Không dùng dịch vụ AI trả phí: đề được sinh từ ngân hàng câu hỏi theo khung đề, phân tích kết quả bằng thống kê và quy tắc.
+
+**Giáo viên / quản trị viên** (menu *Quản trị*):
+
+| Mục | Chức năng |
+|---|---|
+| Lớp học | Tạo lớp, mã lớp 6 ký tự để học viên tự vào, thêm học viên bằng email, lưu trữ lớp, báo cáo lớp |
+| Ngân hàng câu hỏi | Dùng chung. 3 dạng: trắc nghiệm 4 phương án, đúng/sai 4 ý, trả lời ngắn (điền số). Câu trả lời ngắn có thể khai báo **biến thể số liệu** (`{{biến}}` + biểu thức đáp số) để mỗi đề sinh ra khác số. Có lịch sử chỉnh sửa |
+| Đề mẫu | Tải đề `.docx`/`.pdf`/`.txt` (hoặc dán chữ) → tách phần, câu, phương án, dữ kiện chung, bảng đáp án; đoán chủ đề, mức độ → duyệt, sửa → lưu ngân hàng, tạo khung đề cùng cấu trúc và sinh ngay đề tương tự |
+| Đề | Sinh đề từ khung đề (TN THPT 18–4–6, 45 phút, 15 phút, luyện tập, khung theo đề TN 2026, khung tự tạo), sửa/đổi câu/đổi số liệu, in đề, nhân bản |
+| Giao bài | Giao cho cả lớp hoặc từng học viên; giờ mở, hạn nộp, thời gian làm, số lần làm, tính điểm cao nhất/lần cuối, thời điểm hiện đáp án, tự giao luyện tập. Theo dõi tiến độ, thống kê từng câu, phổ điểm, lỗi thường gặp, xuất CSV |
+| Chấm bài | Chấm tự động theo thang TN THPT; chỉnh điểm từng câu (bắt buộc ghi lí do, lưu lịch sử). Sửa đáp án một câu trong đề đã giao → tự chấm lại mọi bài |
+| Báo cáo | Báo cáo lớp (bảng điểm, xu hướng, mức độ nắm vững theo chủ đề, học viên cần quan tâm) và cá nhân; xuất CSV mở bằng Excel |
+
+Giáo viên chỉ thấy lớp, đề, bài giao của mình; quản trị viên thấy tất cả.
+
+**Học viên** (menu *Học tập*): vào lớp bằng mã, làm bài (tự lưu, đồng hồ đếm ngược, nộp quá giờ được nhận nhưng đánh dấu trễ), xem điểm, phân tích theo chủ đề/dạng câu/mức độ, điểm mạnh – yếu, lỗi thường gặp (đổi đơn vị, làm tròn, sai dấu…), gợi ý phương pháp học, bài học và mô phỏng nên ôn; bài luyện tập tự động theo điểm yếu; tự luyện tập theo chủ đề; biểu đồ tiến bộ.
+
+**Ngân hàng có sẵn** nằm trong `content/ngan-hang/` và được nạp tự động khi khởi động (câu đã có hoặc đã bị giáo viên xoá sẽ không nạp lại):
+
+- `de-tn-2026.js` — 56 câu từ đề TN THPT 2026 môn Vật lí (mã 0230, 0207). Đáp án và lời giải do website tự giải, giáo viên nên rà soát.
+- `chuyen-de-10-11-12.js` — 120 câu tự biên soạn cho 15 chủ đề lớp 10–12.
+
+```bash
+npm run nap-ngan-hang                              # nạp lại mọi file (bỏ qua câu đã có)
+npm run nap-ngan-hang -- --cap-nhat                # ghi đè câu đã có bằng nội dung trong file
+npm run nap-ngan-hang -- --tu-bai-hoc              # chép câu trắc nghiệm của bài học vào ngân hàng
+```
+
+Định dạng đề mẫu đọc tốt nhất: xem `test/fixtures/de-mau.txt`. Đề dạng ảnh chụp/scan không đọc được chữ.
+
 ## Cấu trúc thư mục
 
 ```
@@ -159,7 +193,10 @@ src/
   levels.js          Danh sách cấp học
   simulations.js     Danh sách mô phỏng
   lib/               Markdown, chấm điểm, middleware, truy vấn nội dung
-  routes/            public, auth, learning (nộp bài, tiến độ), admin
+                     lms.js, bank.js, generator.js, analysis.js, exam-parser.js… (hệ thống học tập)
+  routes/            public, auth, learning (nộp bài, tiến độ), admin,
+                     lms-admin (giáo viên), lms-student (học viên)
+content/ngan-hang/   Ngân hàng câu hỏi có sẵn
 views/               Giao diện EJS
 public/              CSS, JS, mô phỏng (canvas)
 test/                Kiểm thử (node --test)

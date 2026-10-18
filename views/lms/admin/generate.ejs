@@ -1,0 +1,49 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Sinh đề tự động', crumbs: [{ href: '/quan-tri/de', label: 'Đề' }] }) %>
+<section class="section section-tight">
+  <div class="container narrow">
+    <form class="card form-card" method="post" action="/quan-tri/de/sinh">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <fieldset class="field">
+        <legend>1. Chọn khung đề</legend>
+        <div class="choice-list">
+          <% blueprints.forEach(function (b) { %>
+            <label class="choice">
+              <input type="radio" name="blueprint_id" value="<%= b.id %>" <%= b.id === selected ? 'checked' : '' %> data-needs-topics="<%= b.needsTopics ? 1 : 0 %>" required>
+              <span><strong><%= b.name %></strong><br><span class="small muted"><%= b.summary.questions %> câu · <%= score(b.summary.points) %> điểm · <%= b.duration_min ? b.duration_min + ' phút' : 'không giới hạn' %><%= b.needsTopics ? ' · cần chọn chủ đề' : ' · chủ đề theo khung' %></span></span>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+
+      <fieldset class="field" data-topics-block>
+        <legend>2. Chủ đề <span class="optional">(dùng cho khung đề "tự chọn chủ đề")</span></legend>
+        <% [10, 11, 12].forEach(function (g) { %>
+          <div class="topic-group">
+            <p class="label">Lớp <%= g %></p>
+            <div class="chip-checks">
+              <% TOPICS.filter(function (t) { return t.grade === g; }).forEach(function (t) {
+                   const n = counts.filter(function (c) { return c.topic === t.key; }).reduce(function (s, c) { return s + c.n; }, 0); %>
+                <label class="chip-check"><input type="checkbox" name="topics" value="<%= t.key %>"><span><%= t.name %> <small>(<%= n %> câu)</small></span></label>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+        <p class="field-hint">Câu thiếu sẽ được bù bằng câu cùng chủ đề khác mức độ; hệ thống báo rõ chỗ thiếu sau khi sinh.</p>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>3. Thông tin đề</legend>
+        <div class="form-grid">
+          <div class="field field-wide"><label for="title">Tên đề</label><input id="title" name="title" type="text" maxlength="180" placeholder="Để trống = tên khung đề"></div>
+          <div class="field"><label for="kind">Loại</label><select id="kind" name="kind"><option value="">Theo khung đề</option><% Object.keys(KINDS).forEach(function (k) { %><option value="<%= k %>"><%= KINDS[k] %></option><% }) %></select></div>
+          <div class="field"><label for="duration_min">Thời gian (phút)</label><input id="duration_min" name="duration_min" type="number" min="1" max="600" placeholder="Theo khung đề"></div>
+          <div class="field"><label for="versions">Số đề cần sinh</label><select id="versions" name="versions"><% for (let n = 1; n <= 10; n++) { %><option value="<%= n %>"><%= n %> đề<%= n > 1 ? ' (khác câu/khác số liệu)' : '' %></option><% } %></select></div>
+          <div class="field field-wide"><label for="description">Ghi chú</label><textarea id="description" name="description" rows="2"></textarea></div>
+        </div>
+      </fieldset>
+      <div class="form-actions"><button class="btn btn-primary btn-lg" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg>Sinh đề</button><a class="btn btn-ghost" href="/quan-tri/de">Huỷ</a></div>
+    </form>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

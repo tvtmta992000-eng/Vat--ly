@@ -1,0 +1,53 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/student-head', { heading: 'Kết quả bài làm', crumbs: [{ href: '/hoc-tap', label: 'Học tập' }, { href: '/hoc-tap/bai/' + a.id, label: a.title }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="card attempt-summary">
+      <div>
+        <p class="muted small"><%= a.title %></p>
+        <p class="big-score score is-<%= analysis.level ? analysis.level.tone : 'ok' %>"><%= score(attempt.score) %><small>/<%= score(attempt.max_score) %> điểm</small></p>
+        <p class="small">
+          <% if (analysis.level) { %><strong><%= analysis.level.label %></strong> · <% } %>
+          Quy đổi thang 10: <strong><%= score(attempt.score / attempt.max_score * 10) %></strong>
+          · Nộp lúc <%= time.formatDateTime(attempt.submitted_at) %>
+          <% if (analysis.timing && analysis.timing.usedSec) { %>· Làm trong <%= time.formatDuration(analysis.timing.usedSec) %><% } %>
+          <% if (attempt.is_late) { %><span class="badge badge-warning">Nộp trễ</span><% } %>
+          <% if (attempt.adjusted) { %><span class="badge badge-warning">Giáo viên đã điều chỉnh điểm</span><% } %>
+        </p>
+      </div>
+      <div class="form-actions">
+        <% if (canRetry) { %><form method="post" action="/hoc-tap/bai/<%= a.id %>/bat-dau"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-secondary" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>Làm lại</button></form><% } %>
+        <% if (analysis.autoPractice) { %>
+          <a class="btn btn-accent" href="/hoc-tap/bai/<%= analysis.autoPractice.assignmentId %>"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg>Làm bài luyện tập đã giao cho bạn</a>
+        <% } else { %>
+          <form method="post" action="/hoc-tap/ket-qua/<%= attempt.id %>/luyen-tap"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-accent" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg>Tạo bài luyện tập phù hợp</button></form>
+        <% } %>
+      </div>
+    </div>
+
+    <%- include('../partials/analysis', { analysis: analysis }) %>
+
+    <% if (analysis.review && analysis.review.length) { %>
+      <h2 class="section-title section-gap">Ôn tập đề xuất</h2>
+      <div class="grid grid-2">
+        <% analysis.review.forEach(function (r) { %>
+          <section class="card review-card">
+            <h3 class="h3"><%= r.name %></h3>
+            <p class="small"><%= r.tip %></p>
+            <ul class="simple-list small">
+              <% r.lessons.forEach(function (slug) { const l = lessonsBySlug[slug]; if (!l) return; %><li><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><a href="/bai/<%= l.slug %>"><%= l.title %></a></li><% }) %>
+              <% if (r.simulation && simulations[r.simulation]) { %><li><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><a href="/mo-phong/<%= r.simulation %>">Mô phỏng: <%= simulations[r.simulation].title %></a></li><% } %>
+            </ul>
+          </section>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <h2 class="section-title section-gap">Bài làm chi tiết</h2>
+    <% if (!showAnswers) { %><div class="alert alert-info"><%= a.show_answers === 'never' ? 'Giáo viên không công bố đáp án cho bài này.' : 'Đáp án và lời giải sẽ hiện sau hạn nộp (' + time.formatDateTime(a.due_at) + ').' %></div><% } %>
+    <div class="exam-sheet">
+      <%- include('../partials/exam-items', { parts: parts, mode: 'result', showAnswers: showAnswers, answers: {} }) %>
+    </div>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

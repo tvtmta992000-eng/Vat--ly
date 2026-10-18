@@ -1,0 +1,65 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: title, crumbs: [{ href: '/quan-tri/giao-bai', label: 'Giao bài' }] }) %>
+<section class="section section-tight">
+  <div class="container narrow">
+    <form class="card form-card" method="post" action="<%= formAction %>" data-assign-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (errors.length) { %><div class="alert alert-error" role="alert"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div><% } %>
+      <% if (!exams.length) { %><div class="alert alert-info">Bạn chưa có đề nào. <a href="/quan-tri/de/sinh">Sinh đề</a> trước.</div><% } %>
+      <div class="field">
+        <label for="exam_id">Đề</label>
+        <select id="exam_id" name="exam_id" required data-exam-select>
+          <option value="">— Chọn đề —</option>
+          <% exams.forEach(function (e) { %><option value="<%= e.id %>" data-kind="<%= e.kind %>" data-duration="<%= e.duration_min || '' %>" data-title="<%= e.title %>" <%= Number(values.exam_id) === e.id ? 'selected' : '' %>><%= e.title %></option><% }) %>
+        </select>
+      </div>
+      <div class="field"><label for="title">Tiêu đề bài giao</label><input id="title" name="title" type="text" value="<%= values.title %>" required maxlength="200"></div>
+      <div class="field"><label for="instructions">Hướng dẫn cho học viên <span class="optional">(không bắt buộc)</span></label><textarea id="instructions" name="instructions" rows="2"><%= values.instructions || '' %></textarea></div>
+
+      <fieldset class="field">
+        <legend>Giao cho</legend>
+        <div class="field"><label for="class_id">Lớp</label>
+          <select id="class_id" name="class_id" data-class-select>
+            <option value="">— Không theo lớp (chọn học viên bên dưới) —</option>
+            <% classes.forEach(function (c) { %><option value="<%= c.id %>" <%= Number(values.class_id) === c.id ? 'selected' : '' %>><%= c.name %> (<%= c.members.length %> học viên)</option><% }) %>
+          </select>
+        </div>
+        <div class="segmented">
+          <label><input type="radio" name="target_mode" value="class" <%= values.target_mode !== 'some' ? 'checked' : '' %>><span>Cả lớp</span></label>
+          <label><input type="radio" name="target_mode" value="some" <%= values.target_mode === 'some' ? 'checked' : '' %>><span>Chọn từng học viên</span></label>
+        </div>
+        <div class="target-list" data-target-list>
+          <% classes.forEach(function (c) { if (!c.members.length) return; %>
+            <div class="target-group" data-class="<%= c.id %>">
+              <p class="label"><%= c.name %></p>
+              <div class="chip-checks">
+                <% c.members.forEach(function (m) { %><label class="chip-check"><input type="checkbox" name="targets" value="<%= m.id %>" <%= (values.targets || []).includes(m.id) ? 'checked' : '' %>><span><%= m.name %></span></label><% }) %>
+              </div>
+            </div>
+          <% }) %>
+          <% if (!classes.some(function (c) { return c.members.length; })) { %><p class="muted small">Lớp của bạn chưa có học viên.</p><% } %>
+        </div>
+      </fieldset>
+
+      <div class="form-grid">
+        <div class="field"><label for="open_at">Mở bài lúc</label><input id="open_at" name="open_at" type="datetime-local" value="<%= values.open_at || '' %>"><p class="field-hint">Để trống = mở ngay.</p></div>
+        <div class="field"><label for="due_at">Hạn nộp</label><input id="due_at" name="due_at" type="datetime-local" value="<%= values.due_at || '' %>"><p class="field-hint">Giờ Việt Nam. Nộp sau hạn vẫn nhận nhưng bị đánh dấu trễ.</p></div>
+        <div class="field"><label for="duration_min">Thời gian làm bài (phút)</label><input id="duration_min" name="duration_min" type="number" min="1" max="600" value="<%= values.duration_min || '' %>" data-duration-input><p class="field-hint">Để trống = không giới hạn. Quá giờ vẫn nộp được nhưng bị đánh dấu trễ.</p></div>
+        <div class="field"><label for="max_attempts">Số lần làm tối đa</label><input id="max_attempts" name="max_attempts" type="number" min="0" max="100" value="<%= values.max_attempts %>" data-attempts-input><p class="field-hint">0 = không giới hạn.</p></div>
+        <div class="field"><label for="score_policy">Điểm được tính</label><select id="score_policy" name="score_policy"><option value="best" <%= values.score_policy !== 'last' ? 'selected' : '' %>>Lần cao nhất</option><option value="last" <%= values.score_policy === 'last' ? 'selected' : '' %>>Lần làm cuối</option></select></div>
+        <div class="field"><label for="show_answers">Hiện đáp án, lời giải</label><select id="show_answers" name="show_answers"><% Object.keys(SHOW_ANSWERS).forEach(function (k) { %><option value="<%= k %>" <%= values.show_answers === k ? 'selected' : '' %>><%= SHOW_ANSWERS[k] %></option><% }) %></select></div>
+      </div>
+      <label class="check"><input type="checkbox" name="auto_practice" value="1" <%= values.auto_practice ? 'checked' : '' %>> Sau khi nộp, tự giao bài luyện tập theo chủ đề học viên còn yếu</label>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit"><%= locals.editing ? 'Lưu thay đổi' : 'Giao bài' %></button>
+        <a class="btn btn-ghost" href="<%= locals.editing ? '/quan-tri/giao-bai/' + editing.id : '/quan-tri/giao-bai' %>">Huỷ</a>
+      </div>
+    </form>
+    <% if (locals.editing) { %>
+      <form class="danger-zone" method="post" action="/quan-tri/giao-bai/<%= editing.id %>/xoa" data-confirm="Xoá bài giao này? Toàn bộ bài làm và điểm của học viên cho bài này sẽ bị xoá vĩnh viễn.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá bài giao</button>
+      </form>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

@@ -1,0 +1,40 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: title, crumbs: [{ href: '/quan-tri/de', label: 'Đề' }] }) %>
+<% const parts = bp.structure.parts.slice(); while (parts.length < Math.min(6, bp.structure.parts.length + 1)) parts.push({ type: '', points: '', slots: [] }); %>
+<section class="section section-tight">
+  <div class="container">
+    <form class="card form-card" method="post" action="<%= formAction %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (errors.length) { %><div class="alert alert-error" role="alert"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div><% } %>
+      <div class="form-grid">
+        <div class="field field-wide"><label for="name">Tên khung đề</label><input id="name" name="name" type="text" value="<%= bp.name %>" required maxlength="200"></div>
+        <div class="field"><label for="kind">Loại</label><select id="kind" name="kind"><option value="practice" <%= bp.kind === 'practice' ? 'selected' : '' %>>Luyện tập</option><option value="test" <%= bp.kind === 'test' ? 'selected' : '' %>>Kiểm tra</option><option value="exam" <%= bp.kind === 'exam' ? 'selected' : '' %>>Đề thi</option></select></div>
+        <div class="field"><label for="duration_min">Thời gian (phút)</label><input id="duration_min" name="duration_min" type="number" min="1" max="600" value="<%= bp.duration_min || '' %>" placeholder="Không giới hạn"></div>
+        <div class="field field-wide"><label for="source_note">Ghi chú</label><input id="source_note" name="source_note" type="text" value="<%= bp.source_note || '' %>" maxlength="300"></div>
+      </div>
+      <p class="field-hint">Mỗi phần gồm một dạng câu với điểm mỗi câu; mỗi dòng trong phần là một nhóm câu (chủ đề, mức độ, số câu). Chủ đề "Tự chọn" = chọn khi sinh đề. Để trống số câu để bỏ dòng; bỏ chọn dạng để bỏ phần.</p>
+      <% parts.forEach(function (part, pi) { const slots = part.slots.slice(); for (let k = 0; k < 3; k++) slots.push({ topic: null, difficulty: null, count: '' }); %>
+        <fieldset class="card blueprint-part">
+          <legend class="h3">Phần <%= pi + 1 %></legend>
+          <div class="form-grid">
+            <div class="field"><label for="p<%= pi %>_type">Dạng câu</label><select id="p<%= pi %>_type" name="p<%= pi %>_type"><option value="">— Không dùng —</option><% Object.keys(TYPES).forEach(function (k) { %><option value="<%= k %>" <%= part.type === k ? 'selected' : '' %>><%= TYPES[k] %></option><% }) %></select></div>
+            <div class="field"><label for="p<%= pi %>_points">Điểm mỗi câu</label><input id="p<%= pi %>_points" name="p<%= pi %>_points" inputmode="decimal" value="<%= part.points === '' ? '' : score(part.points) %>"></div>
+          </div>
+          <div class="table-wrap"><table class="table table-compact">
+            <thead><tr><th scope="col">Chủ đề</th><th scope="col">Mức độ</th><th scope="col">Số câu</th></tr></thead>
+            <tbody><% slots.forEach(function (s, si) { %>
+              <tr>
+                <td><label class="sr-only" for="p<%= pi %>_s<%= si %>_topic">Chủ đề</label><select id="p<%= pi %>_s<%= si %>_topic" name="p<%= pi %>_s<%= si %>_topic"><option value="">Tự chọn khi sinh đề</option><% TOPICS.forEach(function (t) { %><option value="<%= t.key %>" <%= s.topic === t.key ? 'selected' : '' %>>Lớp <%= t.grade %> – <%= t.name %></option><% }) %></select></td>
+                <td><label class="sr-only" for="p<%= pi %>_s<%= si %>_difficulty">Mức độ</label><select id="p<%= pi %>_s<%= si %>_difficulty" name="p<%= pi %>_s<%= si %>_difficulty"><option value="">Bất kì</option><% Object.keys(DIFFICULTIES).forEach(function (k) { %><option value="<%= k %>" <%= String(s.difficulty) === k ? 'selected' : '' %>><%= DIFFICULTIES[k] %></option><% }) %></select></td>
+                <td><label class="sr-only" for="p<%= pi %>_s<%= si %>_count">Số câu</label><input class="input-sm" id="p<%= pi %>_s<%= si %>_count" name="p<%= pi %>_s<%= si %>_count" type="number" min="0" max="100" value="<%= s.count %>"></td>
+              </tr>
+            <% }) %></tbody>
+          </table></div>
+        </fieldset>
+      <% }) %>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Lưu khung đề</button><a class="btn btn-ghost" href="/quan-tri/de#khung-de">Huỷ</a></div>
+      <p class="field-hint">Cần thêm phần? Lưu lại, khung sẽ hiện thêm một phần trống.</p>
+    </form>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

@@ -1,0 +1,33 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/student-head', { heading: 'Tự luyện tập', lead: 'Chọn chủ đề — hệ thống tạo bài phù hợp với năng lực hiện tại của bạn.' }) %>
+<section class="section section-tight">
+  <div class="container narrow">
+    <% if (suggested.length) { %>
+      <div class="alert alert-info">Gợi ý cho bạn: <strong><%= suggested.map(function (m) { return m.label + ' (' + m.pct + '%)'; }).join(', ') %></strong></div>
+    <% } %>
+    <form class="card form-card" method="post" action="/hoc-tap/luyen-tap">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <fieldset class="field">
+        <legend>Chủ đề (chọn 1–3)</legend>
+        <% [10, 11, 12].forEach(function (g) { %>
+          <div class="topic-group">
+            <p class="label">Lớp <%= g %></p>
+            <div class="chip-checks">
+              <% topics.filter(function (t) { return t.grade === g; }).forEach(function (t) { %>
+                <label class="chip-check <%= t.count ? '' : 'is-disabled' %>"><input type="checkbox" name="topics" value="<%= t.key %>" <%= t.count ? '' : 'disabled' %> <%= suggested.some(function (s) { return s.key === t.key; }) ? 'checked' : '' %>>
+                  <span><%= t.name %><% if (t.mastery) { %> <small class="score is-<%= t.mastery.pct >= 80 ? 'good' : t.mastery.pct >= 50 ? 'ok' : 'low' %>"><%= t.mastery.pct %>%</small><% } %></span></label>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      </fieldset>
+      <div class="form-grid">
+        <div class="field"><label for="difficulty">Mức độ</label><select id="difficulty" name="difficulty"><option value="">Tự động theo năng lực</option><% Object.keys(DIFFICULTIES).forEach(function (k) { %><option value="<%= k %>"><%= DIFFICULTIES[k] %></option><% }) %></select></div>
+        <div class="field"><label for="per_topic">Số câu mỗi chủ đề</label><select id="per_topic" name="per_topic"><% [3, 5, 7, 10].forEach(function (n) { %><option value="<%= n %>" <%= n === 5 ? 'selected' : '' %>><%= n %></option><% }) %></select></div>
+      </div>
+      <p class="field-hint">Mỗi chủ đề gồm câu trắc nghiệm, 1 câu đúng/sai và 1 câu trả lời ngắn; ưu tiên câu bạn chưa gặp. Không giới hạn thời gian và số lần làm.</p>
+      <button class="btn btn-primary btn-lg" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg>Tạo bài luyện tập</button>
+    </form>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

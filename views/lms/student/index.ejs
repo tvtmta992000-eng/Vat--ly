@@ -1,0 +1,47 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/student-head', { heading: 'Học tập', lead: 'Bài được giao, kết quả và gợi ý luyện tập dành riêng cho bạn.' }) %>
+<section class="section section-tight">
+  <div class="container admin-split">
+    <div>
+      <h2 class="section-title">Cần làm <% if (todo.length) { %><span class="count-pill"><%= todo.length %></span><% } %></h2>
+      <% if (!todo.length) { %><div class="empty-state"><p><%= classes.length ? 'Bạn đã hoàn thành mọi bài được giao. Tuyệt vời!' : 'Bạn chưa ở lớp nào. Nhập mã lớp do giáo viên cung cấp ở khung bên cạnh.' %></p></div><% } else { %>
+        <ul class="assign-list"><% todo.forEach(function (a) { %><%- include('../partials/assignment-card', { a: a }) %><% }) %></ul>
+      <% } %>
+      <% if (upcoming.length) { %>
+        <h2 class="section-title section-gap">Sắp mở</h2>
+        <ul class="assign-list"><% upcoming.forEach(function (a) { %><%- include('../partials/assignment-card', { a: a }) %><% }) %></ul>
+      <% } %>
+      <% if (practice.length) { %>
+        <h2 class="section-title section-gap">Bài luyện tập dành cho bạn</h2>
+        <ul class="assign-list"><% practice.slice(0, 8).forEach(function (a) { %><%- include('../partials/assignment-card', { a: a }) %><% }) %></ul>
+      <% } %>
+      <% if (done.length) { %>
+        <h2 class="section-title section-gap">Đã nộp</h2>
+        <ul class="assign-list"><% done.forEach(function (a) { %><%- include('../partials/assignment-card', { a: a }) %><% }) %></ul>
+      <% } %>
+    </div>
+    <aside class="stack">
+      <form class="card form-card" method="post" action="/hoc-tap/vao-lop">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <h2 class="h3">Vào lớp</h2>
+        <div class="field"><label for="code">Mã lớp (6 ký tự)</label><input id="code" name="code" type="text" maxlength="8" autocomplete="off" required class="code-input" placeholder="VD: K7M2QA"></div>
+        <button class="btn btn-primary btn-block" type="submit">Vào lớp</button>
+      </form>
+      <section class="card">
+        <h2 class="h3">Lớp của tôi</h2>
+        <% if (!classes.length) { %><p class="muted small">Chưa có.</p><% } else { %>
+          <ul class="simple-list"><% classes.forEach(function (c) { %>
+            <li><span><strong><%= c.name %></strong><br><span class="small muted">GV: <%= c.teacher_name %></span></span>
+              <form method="post" action="/hoc-tap/lop/<%= c.id %>/roi" data-confirm="Rời lớp <%= c.name %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit">Rời lớp</button></form></li>
+          <% }) %></ul>
+        <% } %>
+      </section>
+      <section class="card">
+        <h2 class="h3">Mức độ nắm vững</h2>
+        <%- include('../partials/mastery', { mastery: mastery.slice(0, 6) }) %>
+        <a class="btn btn-secondary btn-sm" href="/hoc-tap/luyen-tap"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg>Luyện tập theo chủ đề</a>
+      </section>
+    </aside>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

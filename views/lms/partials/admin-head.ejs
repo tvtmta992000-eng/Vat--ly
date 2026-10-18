@@ -1,0 +1,12 @@
+<section class="page-head admin-head">
+  <div class="container">
+    <% if (locals.crumbs) { %>
+      <nav class="breadcrumb" aria-label="Đường dẫn">
+        <% crumbs.forEach(function (c) { %><a href="<%= c.href %>"><%= c.label %></a><span aria-hidden="true">/</span><% }) %>
+        <span aria-current="page"><%= heading %></span>
+      </nav>
+    <% } %>
+    <h1><%= heading %></h1>
+    <%- include('../../partials/admin-nav') %>
+  </div>
+</section>

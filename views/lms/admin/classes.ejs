@@ -1,0 +1,43 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Lớp học' }) %>
+<section class="section section-tight">
+  <div class="container admin-split">
+    <div>
+      <% if (classes.length === 0) { %>
+        <div class="empty-state"><p>Chưa có lớp nào. Tạo lớp ở khung bên cạnh, rồi gửi <strong>mã lớp</strong> cho học viên để họ tự vào lớp.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Lớp</th><th scope="col">Mã lớp</th><th scope="col">Học viên</th><th scope="col">Bài giao</th><% if (user.role === 'admin') { %><th scope="col">Giáo viên</th><% } %><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+            <tbody>
+              <% classes.forEach(function (c) { %>
+                <tr>
+                  <td><a href="/quan-tri/lop/<%= c.id %>"><strong><%= c.name %></strong></a><% if (c.archived) { %> <span class="badge">Đã lưu trữ</span><% } %></td>
+                  <td><code class="class-code"><%= c.code %></code></td>
+                  <td><%= c.member_count %></td>
+                  <td><%= c.assignment_count %></td>
+                  <% if (user.role === 'admin') { %><td class="small"><%= c.teacher_name %></td><% } %>
+                  <td class="row-actions">
+                    <a class="btn btn-ghost btn-sm" href="/quan-tri/lop/<%= c.id %>/bao-cao"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Báo cáo</a>
+                    <a class="btn btn-ghost btn-sm" href="/quan-tri/giao-bai/moi?lop=<%= c.id %>"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg>Giao bài</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+    <aside class="card form-card">
+      <h2 class="h3">Tạo lớp mới</h2>
+      <form method="post" action="/quan-tri/lop">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="field"><label for="name">Tên lớp</label><input id="name" name="name" type="text" required maxlength="150" placeholder="Ví dụ: 12A1 – Ôn thi TN 2027"></div>
+        <div class="field"><label for="description">Mô tả <span class="optional">(không bắt buộc)</span></label><textarea id="description" name="description" rows="3" maxlength="500"></textarea></div>
+        <button class="btn btn-primary btn-block" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Tạo lớp</button>
+        <p class="field-hint">Hệ thống tự sinh mã lớp gồm 6 ký tự.</p>
+      </form>
+    </aside>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

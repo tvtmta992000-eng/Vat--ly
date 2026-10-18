@@ -1,0 +1,7 @@
+<% if (!errorTotals.length) { %>
+  <p class="muted">Không ghi nhận lỗi nào.</p>
+<% } else { %>
+  <ul class="simple-list error-list">
+    <% errorTotals.forEach(function (e) { %><li><span><%= e.label %></span><span class="badge"><%= e.count %> lần</span></li><% }) %>
+  </ul>
+<% } %>

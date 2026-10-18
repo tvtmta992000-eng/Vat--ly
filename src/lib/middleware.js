@@ -8,7 +8,9 @@ function csrf(req, res, next) {
   res.locals.csrfToken = req.session.csrfToken;
 
   if (req.method === 'POST') {
-    const sent = (req.body && req.body._csrf) || req.get('x-csrf-token') || '';
+    // Form tải file (multipart) chưa được đọc ở bước này nên token gửi kèm trên URL.
+    const fromQuery = req.is('multipart/form-data') ? req.query._csrf : '';
+    const sent = String((req.body && req.body._csrf) || req.get('x-csrf-token') || fromQuery || '');
     const expected = req.session.csrfToken;
     const valid = sent.length === expected.length && crypto.timingSafeEqual(Buffer.from(sent), Buffer.from(expected));
     if (!valid) {

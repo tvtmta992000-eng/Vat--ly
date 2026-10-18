@@ -1,0 +1,79 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: cls.name, crumbs: [{ href: '/quan-tri/lop', label: 'Lớp học' }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="grid grid-3 stat-row">
+      <div class="card stat"><span class="stat-label">Mã lớp</span><span class="stat-value"><code class="class-code class-code-lg"><%= cls.code %></code></span>
+        <form method="post" action="/quan-tri/lop/<%= cls.id %>/ma-moi" data-confirm="Tạo mã mới? Mã cũ sẽ không dùng được nữa.">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit">Đổi mã</button>
+        </form>
+      </div>
+      <div class="card stat"><span class="stat-label">Học viên</span><span class="stat-value"><%= members.length %></span></div>
+      <div class="card stat"><span class="stat-label">Bài đã giao</span><span class="stat-value"><%= assignments.length %></span></div>
+    </div>
+
+    <div class="toolbar">
+      <h2 class="section-title">Bài giao của lớp</h2>
+      <div class="form-actions">
+        <a class="btn btn-secondary btn-sm" href="/quan-tri/lop/<%= cls.id %>/bao-cao"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Báo cáo lớp</a>
+        <a class="btn btn-primary btn-sm" href="/quan-tri/giao-bai/moi?lop=<%= cls.id %>"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Giao bài</a>
+      </div>
+    </div>
+    <% if (assignments.length === 0) { %>
+      <p class="muted">Chưa giao bài nào cho lớp.</p>
+    <% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th scope="col">Bài</th><th scope="col">Hạn nộp</th><th scope="col">Đã nộp</th></tr></thead>
+        <tbody><% assignments.forEach(function (a) { %>
+          <tr><td><a href="/quan-tri/giao-bai/<%= a.id %>"><%= a.title %></a></td><td class="small"><%= a.due_at ? time.formatDateTime(a.due_at) : 'Không hạn' %></td><td><%= a.submitted %>/<%= members.length %></td></tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+
+    <div class="admin-split section-gap">
+      <section id="thanh-vien">
+        <h2 class="section-title">Học viên (<%= members.length %>)</h2>
+        <% if (members.length === 0) { %>
+          <p class="muted">Chưa có học viên. Học viên đăng nhập → <strong>Học tập</strong> → nhập mã <code><%= cls.code %></code>, hoặc thêm bằng email ở bên cạnh.</p>
+        <% } else { %>
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th scope="col">Họ tên</th><th scope="col">Email</th><th scope="col">Bài đã nộp</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+            <tbody><% members.forEach(function (m) { %>
+              <tr>
+                <td><a href="/quan-tri/hoc-vien/<%= m.id %>"><%= m.name %></a></td>
+                <td class="small"><%= m.email %></td>
+                <td><%= m.attempts %></td>
+                <td class="row-actions">
+                  <form method="post" action="/quan-tri/lop/<%= cls.id %>/thanh-vien/<%= m.id %>/xoa" data-confirm="Xoá <%= m.name %> khỏi lớp?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-text btn-sm" type="submit">Xoá khỏi lớp</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %></tbody>
+          </table></div>
+        <% } %>
+      </section>
+      <aside class="stack">
+        <form class="card form-card" method="post" action="/quan-tri/lop/<%= cls.id %>/thanh-vien">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <h2 class="h3">Thêm học viên</h2>
+          <div class="field"><label for="emails">Email học viên</label><textarea id="emails" name="emails" rows="3" placeholder="hs1@gmail.com, hs2@gmail.com"></textarea><p class="field-hint">Nhiều email cách nhau bởi dấu phẩy hoặc xuống dòng. Học viên phải có tài khoản.</p></div>
+          <button class="btn btn-secondary btn-block" type="submit">Thêm vào lớp</button>
+        </form>
+        <form class="card form-card" method="post" action="/quan-tri/lop/<%= cls.id %>">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <h2 class="h3">Thông tin lớp</h2>
+          <p class="small muted">Giáo viên: <%= teacher ? teacher.name : '' %></p>
+          <div class="field"><label for="cname">Tên lớp</label><input id="cname" name="name" type="text" value="<%= cls.name %>" required maxlength="150"></div>
+          <div class="field"><label for="cdesc">Mô tả</label><textarea id="cdesc" name="description" rows="2" maxlength="500"><%= cls.description || '' %></textarea></div>
+          <label class="check"><input type="checkbox" name="archived" value="1" <%= cls.archived ? 'checked' : '' %>> Lưu trữ lớp (không nhận học viên mới)</label>
+          <div class="form-actions"><button class="btn btn-primary" type="submit">Lưu</button></div>
+        </form>
+        <form method="post" action="/quan-tri/lop/<%= cls.id %>/xoa" data-confirm="Xoá lớp này?">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-text btn-sm" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá lớp</button>
+        </form>
+      </aside>
+    </div>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

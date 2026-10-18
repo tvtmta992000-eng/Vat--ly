@@ -13,6 +13,7 @@
   <script defer src="/vendor/katex/katex.min.js"></script>
   <script defer src="/vendor/katex/contrib/auto-render.min.js"></script>
   <script defer src="/js/main.js"></script>
+  <script defer src="/js/lms.js"></script>
 </head>
 <body>
 <%- include('icons') %>
@@ -44,14 +45,15 @@
 
       <div class="nav-account">
         <% if (user) { %>
-          <a class="btn btn-ghost btn-sm" href="/tien-do"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Tiến độ</a>
+          <a class="btn btn-ghost btn-sm" href="/hoc-tap" title="Học tập" <% if (currentPath.startsWith('/hoc-tap')) { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span class="nav-label">Học tập</span></a>
+          <a class="btn btn-ghost btn-sm" href="/tien-do" title="Tiến độ"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span class="nav-label">Tiến độ</span></a>
           <% if (isStaff) { %>
-            <a class="btn btn-ghost btn-sm" href="/quan-tri"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>Quản trị</a>
+            <a class="btn btn-ghost btn-sm" href="/quan-tri" title="Quản trị"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span class="nav-label">Quản trị</span></a>
           <% } %>
           <form action="/dang-xuat" method="post">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button class="btn btn-ghost btn-sm" type="submit" title="Đăng xuất (<%= user.email %>)">
-              <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>Đăng xuất
+              <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg><span class="nav-label">Đăng xuất</span>
             </button>
           </form>
         <% } else { %>

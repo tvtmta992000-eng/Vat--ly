@@ -1,0 +1,89 @@
+<%# Các ô soạn một câu hỏi. p: tiền tố tên ô (vd 'q3_'), v: formValues %>
+<% const p = locals.p || ''; const id = function (n) { return (p || 'f_') + n; }; %>
+<div class="form-grid">
+  <div class="field">
+    <label for="<%= id('type') %>">Dạng câu</label>
+    <select id="<%= id('type') %>" name="<%= p %>type" data-type-select>
+      <% Object.keys(TYPES).forEach(function (k) { %><option value="<%= k %>" <%= v.type === k ? 'selected' : '' %>><%= TYPES[k] %></option><% }) %>
+    </select>
+  </div>
+  <div class="field">
+    <label for="<%= id('difficulty') %>">Mức độ</label>
+    <select id="<%= id('difficulty') %>" name="<%= p %>difficulty">
+      <% Object.keys(DIFFICULTIES).forEach(function (k) { %><option value="<%= k %>" <%= String(v.difficulty) === k ? 'selected' : '' %>><%= DIFFICULTIES[k] %></option><% }) %>
+    </select>
+  </div>
+  <div class="field field-wide">
+    <label for="<%= id('topic') %>">Chủ đề</label>
+    <select id="<%= id('topic') %>" name="<%= p %>topic">
+      <% [10, 11, 12].forEach(function (g) { %><optgroup label="Lớp <%= g %>"><% TOPICS.filter(function (t) { return t.grade === g; }).forEach(function (t) { %><option value="<%= t.key %>" <%= v.topic === t.key ? 'selected' : '' %>><%= t.name %></option><% }) %></optgroup><% }) %>
+    </select>
+  </div>
+</div>
+<div class="field">
+  <label for="<%= id('context') %>">Dữ kiện chung <span class="optional">(không bắt buộc — dùng khi nhiều câu chung một đoạn thông tin)</span></label>
+  <textarea id="<%= id('context') %>" name="<%= p %>context" rows="2"><%= v.context %></textarea>
+</div>
+<div class="field">
+  <label for="<%= id('stem') %>">Nội dung câu hỏi</label>
+  <textarea id="<%= id('stem') %>" name="<%= p %>stem" rows="3" required><%= v.stem %></textarea>
+  <p class="field-hint">Hỗ trợ Markdown và công thức <code>$...$</code>, ảnh <code>![mô tả](link-ảnh)</code>.</p>
+</div>
+
+<fieldset class="field type-block" data-type-block="mcq" <%= v.type !== 'mcq' ? 'hidden' : '' %>>
+  <legend>Phương án — chọn ô tròn ở đáp án đúng</legend>
+  <% for (let i = 0; i < 4; i++) { %>
+    <div class="option-input">
+      <input type="radio" name="<%= p %>answer" value="<%= i %>" id="<%= id('ans' + i) %>" <%= v.type === 'mcq' && v.answer === i ? 'checked' : '' %> aria-label="<%= 'ABCD'[i] %> là đáp án đúng">
+      <label for="<%= id('opt' + i) %>" class="option-letter"><%= 'ABCD'[i] %></label>
+      <input type="text" id="<%= id('opt' + i) %>" name="<%= p %>opt_<%= i %>" value="<%= v.options[i] || '' %>">
+    </div>
+  <% } %>
+</fieldset>
+
+<fieldset class="field type-block" data-type-block="tf" <%= v.type !== 'tf' ? 'hidden' : '' %>>
+  <legend>4 ý — đánh dấu Đúng/Sai</legend>
+  <% for (let i = 0; i < 4; i++) { %>
+    <div class="option-input tf-input">
+      <span class="option-letter"><%= 'abcd'[i] %></span>
+      <label class="sr-only" for="<%= id('st' + i) %>">Ý <%= 'abcd'[i] %></label>
+      <input type="text" id="<%= id('st' + i) %>" name="<%= p %>st_<%= i %>" value="<%= v.statements[i] || '' %>">
+      <label class="tf-choice"><input type="radio" name="<%= p %>tf_<%= i %>" value="true" <%= v.answers[i] === true ? 'checked' : '' %>><span>Đ</span></label>
+      <label class="tf-choice"><input type="radio" name="<%= p %>tf_<%= i %>" value="false" <%= v.answers[i] === false ? 'checked' : '' %>><span>S</span></label>
+    </div>
+  <% } %>
+</fieldset>
+
+<div class="type-block" data-type-block="short" <%= v.type !== 'short' ? 'hidden' : '' %>>
+  <div class="form-grid form-grid-3">
+    <div class="field"><label for="<%= id('short') %>">Đáp số</label><input type="text" inputmode="decimal" id="<%= id('short') %>" name="<%= p %>short_answer" value="<%= v.shortAnswer %>" placeholder="0,12"></div>
+    <div class="field"><label for="<%= id('dec') %>">Số chữ số thập phân</label><input type="number" min="0" max="6" id="<%= id('dec') %>" name="<%= p %>decimals" value="<%= v.decimals %>"></div>
+    <div class="field"><label for="<%= id('unit') %>">Đơn vị</label><input type="text" id="<%= id('unit') %>" name="<%= p %>unit" value="<%= v.unit %>" maxlength="30" placeholder="kJ"></div>
+  </div>
+  <% if (!locals.noTemplate) { %>
+  <details class="help" <%= v.useTemplate ? 'open' : '' %>>
+    <summary>Biến thể số liệu (sinh nhiều đề khác số)</summary>
+    <div class="help-body">
+      <label class="check"><input type="checkbox" name="<%= p %>use_template" value="1" <%= v.useTemplate ? 'checked' : '' %>> Bật biến thể — đáp số được tính tự động từ biểu thức</label>
+      <div class="field"><label for="<%= id('tv') %>">Biến (mỗi dòng: <code>tên = mặc định ; nhỏ nhất ; lớn nhất ; bước</code>, hằng số: <code>tên = giá trị</code>)</label>
+        <textarea id="<%= id('tv') %>" name="<%= p %>template_vars" rows="4" placeholder="t1 = 14,5 ; 10 ; 20 ; 0,1&#10;t2 = 48,5 ; 40 ; 55 ; 0,1"><%= v.templateVars %></textarea></div>
+      <div class="field"><label for="<%= id('ta') %>">Biểu thức đáp số</label><input type="text" id="<%= id('ta') %>" name="<%= p %>template_answer" value="<%= v.templateAnswer %>" placeholder="((t2+273)/(t1+273)-1)*100"></div>
+      <p>Trong nội dung, viết <code>{{t1}}</code> để chèn giá trị biến, <code>{{ans}}</code> để chèn đáp số (trong lời giải). Biểu thức dùng dấu chấm thập phân, có <code>+ - * / ^ sqrt exp ln log10 sin cos tan</code> (góc theo độ), <code>pi</code>.</p>
+    </div>
+  </details>
+  <% } %>
+</div>
+
+<div class="field">
+  <label for="<%= id('explanation') %>">Lời giải <span class="optional">(hiện cho học viên sau khi nộp, tuỳ cài đặt bài giao)</span></label>
+  <textarea id="<%= id('explanation') %>" name="<%= p %>explanation" rows="3"><%= v.explanation %></textarea>
+</div>
+<% if (!locals.compact) { %>
+<details class="help">
+  <summary>Nguồn và nhóm câu</summary>
+  <div class="help-body form-grid">
+    <div class="field"><label for="<%= id('source') %>">Nguồn</label><input type="text" id="<%= id('source') %>" name="<%= p %>source" value="<%= v.source %>" maxlength="200"></div>
+    <div class="field"><label for="<%= id('family') %>">Nhóm câu (mã)</label><input type="text" id="<%= id('family') %>" name="<%= p %>family" value="<%= v.family %>" maxlength="80"><p class="field-hint">Các câu cùng nhóm không xuất hiện chung trong một đề.</p></div>
+  </div>
+</details>
+<% } %>

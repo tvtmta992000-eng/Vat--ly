@@ -1,0 +1,53 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Báo cáo lớp ' + cls.name, crumbs: [{ href: '/quan-tri/lop', label: 'Lớp học' }, { href: '/quan-tri/lop/' + cls.id, label: cls.name }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="toolbar">
+      <p class="muted">Điểm quy về thang 10, theo chính sách tính điểm của từng bài (cao nhất hoặc lần cuối).</p>
+      <a class="btn btn-secondary btn-sm" href="/quan-tri/lop/<%= cls.id %>/bao-cao?csv=1"><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg>Xuất bảng điểm (CSV/Excel)</a>
+    </div>
+
+    <div class="grid grid-2">
+      <section class="card">
+        <h2 class="h3">Điểm trung bình qua các bài</h2>
+        <%- trendChart || '<p class="muted">Chưa có bài nào được nộp.</p>' %>
+      </section>
+      <section class="card">
+        <h2 class="h3">Phổ điểm trung bình của học viên</h2>
+        <%- students.some(function (s) { return s.avg !== null; }) ? histogramChart : '<p class="muted">Chưa có dữ liệu.</p>' %>
+      </section>
+      <section class="card">
+        <h2 class="h3">Mức độ nắm vững theo chủ đề (cả lớp)</h2>
+        <%- include('../partials/mastery', { mastery: mastery }) %>
+      </section>
+      <section class="card">
+        <h2 class="h3">Học viên cần quan tâm</h2>
+        <% if (!attention.length) { %><p class="muted">Không có học viên nào dưới 5 điểm hoặc bỏ nhiều bài.</p><% } else { %>
+          <ul class="simple-list">
+            <% attention.forEach(function (s) { %>
+              <li><a href="/quan-tri/hoc-vien/<%= s.id %>"><%= s.name %></a><span class="muted small">TB <%= s.avg === null ? '—' : score(s.avg) %> · đã làm <%= s.done %>/<%= assignments.length %> bài<% if (s.mastery[0] && s.mastery[0].pct < 50) { %> · yếu: <%= s.mastery[0].label %><% } %></span></li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </section>
+    </div>
+
+    <h2 class="section-title section-gap">Bảng điểm</h2>
+    <% if (!students.length) { %><p class="muted">Lớp chưa có học viên.</p><% } else { %>
+      <div class="table-wrap"><table class="table table-compact">
+        <thead><tr><th scope="col">Học viên</th>
+          <% assignments.forEach(function (a) { %><th scope="col"><a href="/quan-tri/giao-bai/<%= a.id %>" title="<%= a.title %>"><%= a.title.length > 22 ? a.title.slice(0, 20) + '…' : a.title %></a></th><% }) %>
+          <th scope="col">TB</th></tr></thead>
+        <tbody>
+          <% students.forEach(function (s) { %>
+            <tr><td><a href="/quan-tri/hoc-vien/<%= s.id %>"><%= s.name %></a></td>
+              <% assignments.forEach(function (a) { const v = s.scores[a.id]; %><td><% if (v === undefined) { %><span class="muted">—</span><% } else { %><span class="score <%= v >= 8 ? 'is-good' : v >= 5 ? 'is-ok' : 'is-low' %>"><%= score(v) %></span><% } %></td><% }) %>
+              <td><strong><%= s.avg === null ? '—' : score(s.avg) %></strong></td></tr>
+          <% }) %>
+          <tr class="row-total"><td>Trung bình lớp</td><% assignments.forEach(function (a) { %><td><%= a.avg === null ? '—' : score(a.avg) %></td><% }) %><td></td></tr>
+        </tbody>
+      </table></div>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

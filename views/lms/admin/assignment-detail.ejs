@@ -1,0 +1,84 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: a.title, crumbs: [{ href: '/quan-tri/giao-bai', label: 'Giao bài' }] }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="toolbar">
+      <p class="muted">
+        Đề: <a href="/quan-tri/de/<%= a.exam_id %>"><%= a.exam_title %></a>
+        · <%= a.class_name ? 'Lớp ' + a.class_name : 'Giao riêng' %>
+        · Hạn: <%= a.due_at ? time.formatDateTime(a.due_at) : 'không' %>
+        · <%= (a.duration_min || a.exam_duration) ? (a.duration_min || a.exam_duration) + ' phút' : 'không giới hạn giờ' %>
+        · <%= Number(a.max_attempts) ? a.max_attempts + ' lần làm' : 'làm không giới hạn' %> (tính <%= a.score_policy === 'last' ? 'lần cuối' : 'lần cao nhất' %>)
+        · Đáp án: <%= SHOW_ANSWERS[a.show_answers].toLowerCase() %>
+      </p>
+      <div class="form-actions">
+        <a class="btn btn-ghost btn-sm" href="/quan-tri/giao-bai/<%= a.id %>?csv=1">Xuất kết quả (CSV)</a>
+        <a class="btn btn-secondary btn-sm" href="/quan-tri/giao-bai/<%= a.id %>/sua"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Sửa</a>
+      </div>
+    </div>
+
+    <div class="grid grid-4 stat-row">
+      <div class="card stat"><span class="stat-label">Đã nộp</span><span class="stat-value"><%= summary.submitted %>/<%= summary.targets %></span></div>
+      <div class="card stat"><span class="stat-label">Đang làm</span><span class="stat-value"><%= summary.doing %></span></div>
+      <div class="card stat"><span class="stat-label">Nộp trễ</span><span class="stat-value"><%= summary.late %></span></div>
+      <div class="card stat"><span class="stat-label">Điểm TB (thang 10)</span><span class="stat-value"><%= summary.avg === null ? '—' : score(summary.avg) %></span><% if (summary.max !== null) { %><span class="small muted">Cao nhất <%= score(summary.max) %> · thấp nhất <%= score(summary.min) %></span><% } %></div>
+    </div>
+
+    <h2 class="section-title">Tiến độ học viên</h2>
+    <% if (!rows.length) { %><p class="muted">Chưa có học viên nào được giao.</p><% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th scope="col">Học viên</th><th scope="col">Trạng thái</th><th scope="col">Lần nộp</th><th scope="col">Điểm</th><th scope="col">Thời gian làm</th><th scope="col">Nộp lúc</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+        <tbody><% rows.forEach(function (r) { %>
+          <tr>
+            <td><a href="/quan-tri/hoc-vien/<%= r.id %>"><%= r.name %></a><div class="muted small"><%= r.email %><%= r.notTarget ? ' · (không còn trong danh sách giao)' : '' %></div></td>
+            <td><span class="status status-<%= r.status %>"><%= STATUS_LABELS[r.status] %></span><% if (r.counted && r.counted.adjusted) { %> <span class="badge badge-warning">Đã chỉnh điểm</span><% } %></td>
+            <td><%= r.attemptsUsed %></td>
+            <td><% if (r.counted) { %><span class="score <%= r.score10 >= 8 ? 'is-good' : r.score10 >= 5 ? 'is-ok' : 'is-low' %>"><%= score(r.counted.score) %>/<%= score(r.counted.max_score) %></span><% } else { %>—<% } %></td>
+            <td class="small"><%= r.usedSec ? time.formatDuration(r.usedSec) : '—' %></td>
+            <td class="small"><%= r.counted ? time.formatDateTime(r.counted.submitted_at) : '' %></td>
+            <td class="row-actions"><% if (r.counted) { %><a class="btn btn-ghost btn-sm" href="/quan-tri/bai-lam/<%= r.counted.id %>">Xem / chấm</a><% } else if (r.inProgress) { %><a class="btn btn-ghost btn-sm" href="/quan-tri/bai-lam/<%= r.inProgress.id %>">Xem bài đang làm</a><% } %></td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+
+    <% if (summary.submitted) { %>
+      <div class="grid grid-2 section-gap">
+        <section class="card"><h2 class="h3">Phổ điểm (thang 10)</h2><%- histogramChart %></section>
+        <section class="card"><h2 class="h3">Mức độ nắm vững theo chủ đề</h2><%- include('../partials/mastery', { mastery: mastery }) %></section>
+        <section class="card"><h2 class="h3">Lỗi thường gặp</h2><%- include('../partials/errors', { errorTotals: errorTotals }) %></section>
+        <section class="card">
+          <h2 class="h3">Câu nhiều học viên làm sai</h2>
+          <% const hard = stats.filter(function (s) { return s.n && s.scoreRate < 60; }).sort(function (x, y) { return x.scoreRate - y.scoreRate; }).slice(0, 8); %>
+          <% if (!hard.length) { %><p class="muted">Không có câu nào dưới 60% điểm.</p><% } else { %>
+            <ul class="simple-list"><% hard.forEach(function (s) { %><li><a href="#q-stat-<%= s.id %>">Câu <%= s.position %></a> · <%= getTopic(s.topic).name %><span class="muted small"><%= s.scoreRate %>% điểm<%= s.note ? ' · ' + s.note : '' %></span></li><% }) %></ul>
+          <% } %>
+        </section>
+      </div>
+
+      <h2 class="section-title section-gap">Thống kê từng câu</h2>
+      <div class="table-wrap"><table class="table table-compact">
+        <thead><tr><th scope="col">Câu</th><th scope="col">Dạng</th><th scope="col">Chủ đề · mức độ</th><th scope="col">Đạt trọn điểm</th><th scope="col">Tỉ lệ điểm</th><th scope="col">Bỏ trống</th><th scope="col">Chi tiết</th></tr></thead>
+        <tbody><% stats.forEach(function (s) { %>
+          <tr id="q-stat-<%= s.id %>">
+            <td><%= s.position %></td><td><%= TYPES[s.type] %></td><td class="small"><%= getTopic(s.topic).name %> · <%= DIFFICULTIES[s.difficulty] %></td>
+            <td><%= s.fullRate === null ? '—' : s.fullRate + '%' %></td><td><%= s.scoreRate === null ? '—' : s.scoreRate + '%' %></td><td><%= s.blank %></td>
+            <td class="small">
+              <% if (s.choices) { %><%= s.choices.map(function (c) { return c.letter + (c.correct ? '✓' : '') + ': ' + c.count; }).join(' · ') %><% } %>
+              <% if (s.statements) { %><%= s.statements.map(function (c) { return c.label + ') ' + (c.rate === null ? '—' : c.rate + '%'); }).join(' · ') %><% } %>
+              <% if (s.wrongValues && s.wrongValues.length) { %>Sai: <%= s.wrongValues.map(function (w) { return w.value + ' (' + w.count + ')'; }).join(', ') %><% } %>
+              <% if (s.note) { %><div class="text-warning"><%= s.note %></div><% } %>
+            </td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+
+    <% if (history.length) { %>
+      <details class="card section-gap"><summary class="h3">Lịch sử thay đổi bài giao</summary>
+        <ul class="simple-list small"><% history.forEach(function (h) { %><li><%= h.action === 'create' ? 'Tạo' : 'Sửa' %> · <%= h.user_name || '' %><span class="muted"><%= time.formatDateTime(h.created_at) %></span></li><% }) %></ul>
+      </details>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

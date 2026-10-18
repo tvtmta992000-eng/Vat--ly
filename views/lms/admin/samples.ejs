@@ -1,0 +1,56 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Đề mẫu' }) %>
+<section class="section section-tight">
+  <div class="container admin-split">
+    <div>
+      <section class="card form-card">
+        <h2 class="h3">Tải đề mẫu lên để phân tích</h2>
+        <ol class="steps">
+          <li>Tải file đề (Word <code>.docx</code>, PDF có lớp chữ, hoặc <code>.txt</code>) — có thể kèm mục <strong>ĐÁP ÁN</strong> ở cuối.</li>
+          <li>Hệ thống tách các phần, câu hỏi, phương án, đáp án; đoán chủ đề và mức độ.</li>
+          <li>Bạn kiểm tra, sửa, rồi lưu vào ngân hàng; có thể tạo khung đề và sinh ngay các đề tương tự (cùng cấu trúc, dạng câu, mức độ, thang điểm).</li>
+        </ol>
+        <form method="post" action="/quan-tri/de-mau?_csrf=<%= csrfToken %>" enctype="multipart/form-data">
+          <div class="field">
+            <label for="file">File đề</label>
+            <input id="file" name="file" type="file" accept=".docx,.pdf,.txt">
+            <p class="field-hint">Tối đa 15 MB. Đề dạng ảnh chụp/scan không đọc được chữ — hãy dùng bản Word gõ chữ.</p>
+          </div>
+          <details class="help">
+            <summary>Hoặc dán nội dung đề</summary>
+            <div class="field help-body"><label for="text">Nội dung đề</label><textarea id="text" name="text" rows="10" placeholder="PHẦN I. ...&#10;Câu 1. ...&#10;A. ... B. ... C. ... D. ...&#10;&#10;ĐÁP ÁN&#10;1A 2C ..."></textarea></div>
+          </details>
+          <button class="btn btn-primary" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Phân tích đề</button>
+        </form>
+      </section>
+
+      <h2 class="section-title section-gap">Đã tải lên</h2>
+      <% if (!uploads.length) { %><p class="muted">Chưa có đề mẫu nào.</p><% } else { %>
+        <div class="table-wrap"><table class="table">
+          <thead><tr><th scope="col">File</th><th scope="col">Số câu</th><th scope="col">Trạng thái</th><th scope="col">Người tải</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+          <tbody><% uploads.forEach(function (u) { %>
+            <tr>
+              <td><a href="/quan-tri/de-mau/<%= u.id %>"><%= u.filename %></a><div class="muted small"><%= time.formatDateTime(u.created_at) %></div></td>
+              <td><%= u.count %></td>
+              <td><%= u.saved ? 'Đã lưu ' + u.saved.questions + ' câu' : 'Chưa lưu' %></td>
+              <td class="small"><%= u.user_name || '' %></td>
+              <td class="row-actions"><form method="post" action="/quan-tri/de-mau/<%= u.id %>/xoa" data-confirm="Xoá bản phân tích này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-text btn-sm" type="submit">Xoá</button></form></td>
+            </tr>
+          <% }) %></tbody>
+        </table></div>
+      <% } %>
+    </div>
+    <aside class="card form-card">
+      <h2 class="h3">Định dạng để đọc chính xác</h2>
+      <ul class="small tips-list">
+        <li>Mỗi phần bắt đầu bằng <code>PHẦN I</code>, <code>PHẦN II</code>… (tên phần chứa "đúng sai" hoặc "trả lời ngắn" để nhận đúng dạng).</li>
+        <li>Mỗi câu bắt đầu đầu dòng: <code>Câu 1.</code> hoặc <code>Câu 1:</code></li>
+        <li>Phương án <code>A.</code> <code>B.</code> <code>C.</code> <code>D.</code>; ý đúng/sai <code>a)</code> <code>b)</code> <code>c)</code> <code>d)</code>.</li>
+        <li>Dữ kiện chung: <code>Sử dụng các thông tin sau cho Câu 1 và Câu 2: …</code></li>
+        <li>Đáp án ở cuối, sau dòng <code>ĐÁP ÁN</code>: <code>1A 2C 3B</code> · <code>Câu 1: a) Đ b) S c) Đ d) S</code> · <code>Câu 1: 0,12</code> (có thể chia theo PHẦN).</li>
+        <li>Công thức Equation và hình ảnh trong Word không được trích xuất — kiểm tra lại khi duyệt.</li>
+      </ul>
+    </aside>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

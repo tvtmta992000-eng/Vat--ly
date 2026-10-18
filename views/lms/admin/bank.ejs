@@ -1,0 +1,80 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Ngân hàng câu hỏi' }) %>
+<section class="section section-tight">
+  <div class="container">
+    <% if (targetExam) { %>
+      <div class="alert alert-info">Đang chọn câu để thêm vào đề <strong><%= targetExam.title %></strong>. <a href="/quan-tri/de/<%= targetExam.id %>">Quay lại đề</a></div>
+    <% } %>
+    <div class="toolbar">
+      <p class="muted">Ngân hàng dùng chung cho mọi giáo viên. Tổng <strong><%= total %></strong> câu khớp bộ lọc.</p>
+      <div class="form-actions">
+        <form method="post" action="/quan-tri/ngan-hang/tu-bai-hoc"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit" title="Chép câu trắc nghiệm trong các bài học vào ngân hàng">Chép câu từ bài học</button></form>
+        <a class="btn btn-secondary btn-sm" href="/quan-tri/de-mau"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Nhập từ đề mẫu</a>
+        <a class="btn btn-primary btn-sm" href="/quan-tri/ngan-hang/moi"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Thêm câu hỏi</a>
+      </div>
+    </div>
+
+    <form class="filter-bar card" method="get" action="/quan-tri/ngan-hang">
+      <% if (targetExam) { %><input type="hidden" name="them_vao" value="<%= targetExam.id %>"><% } %>
+      <div class="field"><label for="f-dang">Dạng</label><select id="f-dang" name="dang"><option value="">Tất cả</option><% Object.keys(TYPES).forEach(function (k) { %><option value="<%= k %>" <%= filters.type === k ? 'selected' : '' %>><%= TYPES[k] %></option><% }) %></select></div>
+      <div class="field"><label for="f-lop">Lớp</label><select id="f-lop" name="lop"><option value="">Tất cả</option><% [10, 11, 12].forEach(function (g) { %><option value="<%= g %>" <%= filters.grade === g ? 'selected' : '' %>>Lớp <%= g %></option><% }) %></select></div>
+      <div class="field"><label for="f-cd">Chủ đề</label><select id="f-cd" name="chu_de"><option value="">Tất cả</option><% TOPICS.forEach(function (t) { %><option value="<%= t.key %>" <%= filters.topic === t.key ? 'selected' : '' %>>Lớp <%= t.grade %> – <%= t.name %></option><% }) %></select></div>
+      <div class="field"><label for="f-muc">Mức độ</label><select id="f-muc" name="muc"><option value="">Tất cả</option><% Object.keys(DIFFICULTIES).forEach(function (k) { %><option value="<%= k %>" <%= String(filters.difficulty) === k ? 'selected' : '' %>><%= DIFFICULTIES[k] %></option><% }) %></select></div>
+      <div class="field field-grow"><label for="f-q">Tìm</label><input id="f-q" name="q" type="text" value="<%= filters.q %>" placeholder="Nội dung, nguồn…"></div>
+      <div class="field field-action"><button class="btn btn-secondary" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Lọc</button></div>
+    </form>
+
+    <% if (questions.length === 0) { %>
+      <div class="empty-state"><p>Không có câu hỏi phù hợp.</p></div>
+    <% } else { %>
+      <% if (targetExam) { %>
+        <form id="add-form" method="post" action="/quan-tri/de/<%= targetExam.id %>/them">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="back" value="bank">
+          <input type="hidden" name="query" value="<%= new URLSearchParams(Object.fromEntries(Object.entries(query).filter(function (e) { return e[0] !== 'them_vao'; }))).toString() %>">
+          <div class="sticky-actions"><button class="btn btn-primary" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Thêm các câu đã chọn vào đề</button></div>
+        </form>
+      <% } %>
+      <ul class="bank-list">
+        <% questions.forEach(function (q) { %>
+          <li class="card bank-item">
+            <div class="bank-item-head">
+              <% if (targetExam) { %><label class="check"><input type="checkbox" form="add-form" name="ids" value="<%= q.id %>"><span class="sr-only">Chọn câu <%= q.id %></span></label><% } %>
+              <span class="badge"><%= TYPES[q.type] %></span>
+              <span class="badge badge-thpt">Lớp <%= q.grade %> · <%= getTopic(q.topic).name %></span>
+              <span class="badge diff-<%= q.difficulty %>"><%= DIFFICULTIES[q.difficulty] %></span>
+              <% if (q.template) { %><span class="badge badge-success" title="Sinh được nhiều bộ số liệu">Có biến thể số</span><% } %>
+              <span class="muted small bank-source"><%= q.source || '' %></span>
+            </div>
+            <div class="math-content bank-stem"><%= (q.context ? q.context + ' ' : '').slice(0, 160) %><%= q.stem.slice(0, 260) %><%= q.stem.length > 260 ? '…' : '' %></div>
+            <div class="row-actions">
+              <a class="btn btn-ghost btn-sm" href="/quan-tri/ngan-hang/<%= q.id %>"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Xem / sửa</a>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+      <% if (pages > 1) { %>
+        <nav class="pagination" aria-label="Trang">
+          <% for (let p = 1; p <= pages; p++) { const qs = new URLSearchParams(Object.assign({}, query, { trang: p })).toString(); %>
+            <a href="/quan-tri/ngan-hang?<%= qs %>" <% if (p === page) { %>aria-current="page"<% } %>><%= p %></a>
+          <% } %>
+        </nav>
+      <% } %>
+    <% } %>
+
+    <details class="card section-gap">
+      <summary class="h3">Thống kê ngân hàng theo chủ đề</summary>
+      <div class="table-wrap"><table class="table table-compact">
+        <thead><tr><th scope="col">Chủ đề</th><% Object.keys(TYPES).forEach(function (t) { %><th scope="col"><%= TYPES[t] %> (NB/TH/VD)</th><% }) %></tr></thead>
+        <tbody>
+          <% TOPICS.forEach(function (t) { %>
+            <tr><td>Lớp <%= t.grade %> – <%= t.name %></td>
+              <% Object.keys(TYPES).forEach(function (ty) { %><td><%= [1, 2, 3].map(function (d) { const m = matrix.find(function (x) { return x.topic === t.key && x.type === ty && x.difficulty === d; }); return m ? m.n : 0; }).join(' / ') %></td><% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table></div>
+    </details>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

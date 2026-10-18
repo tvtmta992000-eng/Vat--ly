@@ -1,6 +1,12 @@
 <nav class="admin-nav" aria-label="Quản trị">
   <a href="/quan-tri" <% if (adminSection === 'tong-quan' || adminSection === 'bai' || adminSection === 'cau-hoi') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Bài học</a>
   <a href="/quan-tri/chuong" <% if (adminSection === 'chuong') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg>Chương</a>
+  <a href="/quan-tri/lop" <% if (adminSection === 'lop') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>Lớp học</a>
+  <a href="/quan-tri/ngan-hang" <% if (adminSection === 'ngan-hang') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg>Ngân hàng câu hỏi</a>
+  <a href="/quan-tri/de-mau" <% if (adminSection === 'de-mau') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Đề mẫu</a>
+  <a href="/quan-tri/de" <% if (adminSection === 'de' || adminSection === 'khung-de') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>Đề</a>
+  <a href="/quan-tri/giao-bai" <% if (adminSection === 'giao-bai' || adminSection === 'bai-lam') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg>Giao bài</a>
+  <a href="/quan-tri/bao-cao" <% if (adminSection === 'bao-cao' || adminSection === 'hoc-vien') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Báo cáo</a>
   <% if (user.role === 'admin') { %>
     <a href="/quan-tri/nguoi-dung" <% if (adminSection === 'nguoi-dung') { %>aria-current="page"<% } %>><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>Người dùng</a>
   <% } %>

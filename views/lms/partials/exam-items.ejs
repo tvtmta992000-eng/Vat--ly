@@ -1,0 +1,132 @@
+<%#
+  Hiển thị các câu của đề theo phần.
+  mode: 'take' (làm bài) | 'result' (học viên xem kết quả) | 'review' (giáo viên chấm) | 'manage' (sửa đề) | 'print' (xem/in đề)
+  showAnswers: hiện đáp án + lời giải
+  answers: câu trả lời đã lưu (mode take)
+%>
+<% const LETTERS = 'ABCDEF'; %>
+<% parts.forEach(function (part) { %>
+  <section class="exam-part" aria-labelledby="part-<%= part.part %>">
+    <div class="exam-part-head">
+      <h2 id="part-<%= part.part %>" class="h3"><%= part.title %></h2>
+      <span class="muted small"><%= part.items.length %> câu · <%= score(part.points) %> điểm</span>
+      <% if (mode === 'manage' && !locals.hasAttempts) { %>
+        <form class="inline-form part-points" method="post" action="/quan-tri/de/<%= exam.id %>/phan/<%= part.part %>/diem">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label class="small" for="pp-<%= part.part %>">Điểm/câu</label>
+          <input id="pp-<%= part.part %>" class="input-sm" name="points" inputmode="decimal" value="<%= score(part.items[0].points) %>">
+          <button class="btn btn-ghost btn-sm" type="submit">Đổi</button>
+        </form>
+      <% } %>
+    </div>
+    <% part.items.forEach(function (item) {
+         const v = item.view;
+         const r = item.result || null;
+         const full = r && r.points >= r.max - 1e-9;
+         const state = r ? (full ? 'is-correct' : (r.points > 0 ? 'is-partial' : 'is-wrong')) : '';
+         const name = 'a_' + item.id; %>
+      <% if (v.contextHtml) { %>
+        <div class="exam-context">
+          <p class="exam-context-label"><%= v.contextLabel %></p>
+          <div class="math-content prose"><%- v.contextHtml %></div>
+        </div>
+      <% } %>
+      <span class="anchor" id="cau-pos-<%= item.position %>"></span>
+      <fieldset class="question exam-question <%= state %>" id="cau-<%= item.id %>" data-item="<%= item.id %>" data-type="<%= item.type %>">
+        <legend>
+          <span class="question-number">Câu <%= item.number %>
+            <% if (mode !== 'take' && !(mode === 'print' && !showAnswers)) { %><span class="question-meta">· <%= v.typeName %> · <%= v.topicName %> · <%= v.difficultyName %> · <%= score(item.points) %> đ</span><% } %>
+          </span>
+          <span class="math-content question-prompt prose"><%- v.stemHtml %></span>
+        </legend>
+
+        <% if (item.type === 'mcq') { %>
+          <div class="options">
+            <% v.optionsHtml.forEach(function (opt, oi) {
+                 const chosen = mode === 'take' ? answers[item.id] === oi : (r && r.response === oi);
+                 const isAnswer = showAnswers && item.data.answer === oi; %>
+              <label class="option <%= isAnswer ? 'is-answer' : '' %> <%= mode !== 'take' && chosen && !(item.data.answer === oi) && r ? 'is-chosen-wrong' : '' %>">
+                <input type="radio" name="<%= name %>" value="<%= oi %>" <%= chosen ? 'checked' : '' %> <%= mode !== 'take' ? 'disabled' : '' %>>
+                <span class="option-letter" aria-hidden="true"><%= LETTERS[oi] %></span>
+                <span class="math-content"><%- opt %></span>
+                <% if (isAnswer) { %><span class="option-tag">Đáp án</span><% } %>
+                <% if (mode !== 'take' && r && chosen && item.data.answer !== oi) { %><span class="option-tag">Đã chọn</span><% } %>
+              </label>
+            <% }) %>
+          </div>
+        <% } else if (item.type === 'tf') { %>
+          <div class="tf-list" role="group">
+            <% v.statementsHtml.forEach(function (st, si) {
+                 const saved = mode === 'take' ? (answers[item.id] || [])[si] : (r && Array.isArray(r.response) ? r.response[si] : null);
+                 const expected = item.data.answers[si];
+                 const mark = r && (saved === true || saved === false) ? (saved === expected ? 'ok' : 'bad') : (r ? 'blank' : ''); %>
+              <div class="tf-row <%= showAnswers && r ? 'tf-' + mark : '' %>">
+                <span class="tf-label"><%= 'abcd'[si] %>)</span>
+                <span class="math-content tf-text"><%- st %></span>
+                <span class="tf-choices">
+                  <label class="tf-choice"><input type="radio" name="<%= name %>_<%= si %>" value="true" <%= saved === true ? 'checked' : '' %> <%= mode !== 'take' ? 'disabled' : '' %>><span>Đúng</span></label>
+                  <label class="tf-choice"><input type="radio" name="<%= name %>_<%= si %>" value="false" <%= saved === false ? 'checked' : '' %> <%= mode !== 'take' ? 'disabled' : '' %>><span>Sai</span></label>
+                </span>
+                <% if (showAnswers) { %><span class="tf-key"><%= expected ? 'Đ' : 'S' %></span><% } %>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="short-answer">
+            <% if (mode === 'take') { %>
+              <label class="sr-only" for="in-<%= item.id %>">Đáp số câu <%= item.number %></label>
+              <input id="in-<%= item.id %>" class="short-input" type="text" inputmode="decimal" name="<%= name %>" value="<%= answers[item.id] || '' %>" maxlength="20" autocomplete="off" placeholder="Ví dụ: 0,12">
+              <% if (item.data.unit) { %><span class="muted"><%= item.data.unit %></span><% } %>
+              <p class="field-hint">Nhập số, dùng dấu phẩy cho phần thập phân, làm tròn theo yêu cầu đề.</p>
+            <% } else if (r) { %>
+              <p>Trả lời: <strong><%= item.responseText %></strong><% if (item.data.unit && r.response !== null) { %> <%= item.data.unit %><% } %></p>
+            <% } %>
+          </div>
+        <% } %>
+
+        <% if (r && mode !== 'take') { %>
+          <p class="question-verdict">
+            <%= full ? 'Đúng' : (r.points > 0 ? 'Đúng một phần' : (r.response === null ? 'Bỏ trống' : 'Chưa đúng')) %>
+            · <%= score(r.points) %>/<%= score(r.max) %> điểm<% if (item.type === 'tf') { %> (đúng <%= r.correctParts %>/4 ý)<% } %>
+            <% if (r.adjusted || (r.override !== null && r.override !== undefined)) { %><span class="badge badge-warning">Đã chỉnh điểm</span><% } %>
+          </p>
+        <% } %>
+        <% if (showAnswers && mode !== 'take') { %>
+          <p class="answer-key">Đáp án: <strong><%= v.answerText %></strong></p>
+          <% if (v.explanationHtml) { %><div class="explanation math-content"><strong>Lời giải:</strong> <%- v.explanationHtml %></div><% } %>
+        <% } %>
+
+        <% if (mode === 'review' && r && !r.draft) { %>
+          <form class="grade-form" id="ai-<%= r.id %>" method="post" action="/quan-tri/bai-lam/<%= attempt.id %>/cau/<%= r.id %>">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <span class="small muted">Tự động: <%= score(r.auto) %> đ</span>
+            <label class="sr-only" for="pts-<%= r.id %>">Điểm mới</label>
+            <input id="pts-<%= r.id %>" class="input-sm" name="points" inputmode="decimal" value="<%= score(r.override !== null ? r.override : r.auto) %>">
+            <label class="sr-only" for="rs-<%= r.id %>">Lí do</label>
+            <input id="rs-<%= r.id %>" class="input-sm input-grow" name="reason" placeholder="Lí do chỉnh điểm (bắt buộc)" maxlength="500">
+            <button class="btn btn-secondary btn-sm" type="submit">Lưu điểm</button>
+            <% if (r.override !== null) { %><button class="btn btn-ghost btn-sm" type="submit" name="reset" value="1">Về điểm tự động</button><% } %>
+          </form>
+        <% } %>
+
+        <% if (mode === 'manage') { %>
+          <div class="item-actions">
+            <a class="btn btn-ghost btn-sm" href="/quan-tri/de/<%= exam.id %>/cau/<%= item.id %>"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Sửa</a>
+            <% if (!locals.hasAttempts) { %>
+              <form method="post" action="/quan-tri/de/<%= exam.id %>/cau/<%= item.id %>/len"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit" aria-label="Chuyển lên">↑</button></form>
+              <form method="post" action="/quan-tri/de/<%= exam.id %>/cau/<%= item.id %>/xuong"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit" aria-label="Chuyển xuống">↓</button></form>
+              <form method="post" action="/quan-tri/de/<%= exam.id %>/cau/<%= item.id %>/doi"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit" title="Thay bằng câu khác cùng dạng, chủ đề"><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>Đổi câu</button></form>
+              <% if (item.bankQuestionId && item.type === 'short') { %>
+                <form method="post" action="/quan-tri/de/<%= exam.id %>/cau/<%= item.id %>/doi-so"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm" type="submit" title="Giữ câu, sinh bộ số liệu mới (nếu câu có biến thể)">Đổi số liệu</button></form>
+              <% } %>
+              <form method="post" action="/quan-tri/de/<%= exam.id %>/cau/<%= item.id %>/xoa" data-confirm="Xoá câu này khỏi đề?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-text btn-sm" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Xoá</button></form>
+            <% } %>
+            <% if (locals.statsById && statsById[item.id]) { const st = statsById[item.id]; %>
+              <span class="small muted">Đúng: <%= st.fullRate %>%</span>
+            <% } %>
+          </div>
+        <% } %>
+      </fieldset>
+    <% }) %>
+  </section>
+<% }) %>

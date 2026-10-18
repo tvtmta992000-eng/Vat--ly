@@ -1,0 +1,68 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/admin-head', { heading: 'Đề kiểm tra' }) %>
+<section class="section section-tight">
+  <div class="container">
+    <div class="toolbar">
+      <h2 class="section-title">Đề của <%= user.role === 'admin' ? 'tất cả giáo viên' : 'bạn' %></h2>
+      <div class="form-actions">
+        <a class="btn btn-primary btn-sm" href="/quan-tri/de/sinh"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg>Sinh đề tự động</a>
+      </div>
+    </div>
+    <% if (!exams.length) { %>
+      <div class="empty-state"><p>Chưa có đề nào. Bấm <strong>Sinh đề tự động</strong> để tạo đề từ ngân hàng theo khung đề, hoặc tải <a href="/quan-tri/de-mau">đề mẫu</a> lên.</p></div>
+    <% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th scope="col">Đề</th><th scope="col">Loại</th><th scope="col">Số câu</th><th scope="col">Điểm</th><th scope="col">Thời gian</th><th scope="col">Đã giao</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+        <tbody><% exams.forEach(function (e) { %>
+          <tr>
+            <td><a href="/quan-tri/de/<%= e.id %>"><strong><%= e.title %></strong></a><div class="muted small"><%= e.auto_generated ? 'Sinh tự động' : 'Soạn tay' %> · <%= e.author || '' %> · <%= time.formatDate(e.updated_at) %></div></td>
+            <td><span class="badge"><%= KINDS[e.kind] %></span></td>
+            <td><%= e.item_count %></td>
+            <td><%= score(e.total_points) %></td>
+            <td><%= e.duration_min ? e.duration_min + ' phút' : '—' %></td>
+            <td><%= e.assignment_count %></td>
+            <td class="row-actions">
+              <a class="btn btn-ghost btn-sm" href="/quan-tri/de/<%= e.id %>/xem">Xem</a>
+              <a class="btn btn-ghost btn-sm" href="/quan-tri/giao-bai/moi?de=<%= e.id %>"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg>Giao</a>
+            </td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+
+    <div class="admin-split section-gap">
+      <section id="khung-de">
+        <div class="toolbar"><h2 class="section-title">Khung đề</h2><a class="btn btn-secondary btn-sm" href="/quan-tri/khung-de/moi"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Tạo khung đề</a></div>
+        <p class="muted small">Khung đề quy định cấu trúc: số phần, dạng câu, điểm mỗi câu, phân bố chủ đề và mức độ. Đề mới được sinh từ ngân hàng theo khung này.</p>
+        <ul class="bank-list">
+          <% blueprints.forEach(function (b) { %>
+            <li class="card bank-item">
+              <div class="bank-item-head"><strong><%= b.name %></strong><span class="badge"><%= KINDS[b.kind] %></span><% if (b.source_key) { %><span class="badge badge-success">Có sẵn</span><% } %></div>
+              <p class="small muted"><%= b.summary.questions %> câu · <%= score(b.summary.points) %> điểm · <%= b.duration_min ? b.duration_min + ' phút' : 'không giới hạn thời gian' %><%= b.source_note ? ' — ' + b.source_note : '' %></p>
+              <p class="small"><%= b.structure.parts.map(function (p) { return TYPES[p.type] + ': ' + p.slots.reduce(function (s, x) { return s + x.count; }, 0) + ' câu × ' + score(p.points) + 'đ'; }).join(' · ') %></p>
+              <div class="row-actions">
+                <a class="btn btn-primary btn-sm" href="/quan-tri/de/sinh?khung=<%= b.id %>">Sinh đề</a>
+                <a class="btn btn-ghost btn-sm" href="/quan-tri/khung-de/<%= b.id %>"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Sửa</a>
+                <% if (user.role === 'admin' || (b.created_by && b.created_by === user.id)) { %>
+                  <form method="post" action="/quan-tri/khung-de/<%= b.id %>/xoa" data-confirm="Xoá khung đề này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-text btn-sm" type="submit">Xoá</button></form>
+                <% } %>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      </section>
+      <aside class="card form-card">
+        <h2 class="h3">Tạo đề trống</h2>
+        <p class="small muted">Tự chọn từng câu từ ngân hàng.</p>
+        <form method="post" action="/quan-tri/de/moi">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field"><label for="title">Tên đề</label><input id="title" name="title" type="text" required maxlength="200"></div>
+          <div class="field"><label for="kind">Loại</label><select id="kind" name="kind"><% Object.keys(KINDS).forEach(function (k) { %><option value="<%= k %>" <%= k === 'test' ? 'selected' : '' %>><%= KINDS[k] %></option><% }) %></select></div>
+          <div class="field"><label for="duration_min">Thời gian (phút)</label><input id="duration_min" name="duration_min" type="number" min="1" max="600" placeholder="Để trống nếu không giới hạn"></div>
+          <button class="btn btn-secondary btn-block" type="submit">Tạo đề</button>
+        </form>
+      </aside>
+    </div>
+  </div>
+</section>
+<%- include('../../partials/foot') %>

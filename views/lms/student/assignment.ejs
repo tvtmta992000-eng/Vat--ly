@@ -1,0 +1,45 @@
+<%- include('../../partials/head') %>
+<%- include('../partials/student-head', { heading: a.title, crumbs: [{ href: '/hoc-tap', label: 'Học tập' }] }) %>
+<section class="section section-tight">
+  <div class="container narrow">
+    <div class="card form-card">
+      <dl class="meta-grid">
+        <div><dt>Số câu</dt><dd><%= questions %> câu · <%= score(total) %> điểm</dd></div>
+        <div><dt>Thời gian</dt><dd><%= duration ? duration + ' phút' : 'Không giới hạn' %></dd></div>
+        <div><dt>Hạn nộp</dt><dd><%= a.due_at ? time.formatDateTime(a.due_at) : 'Không có' %></dd></div>
+        <div><dt>Số lần làm</dt><dd><%= Number(a.max_attempts) ? attemptsUsed + '/' + a.max_attempts : attemptsUsed + ' (không giới hạn)' %></dd></div>
+        <div><dt>Điểm được tính</dt><dd><%= a.score_policy === 'last' ? 'Lần làm cuối' : 'Lần cao nhất' %></dd></div>
+        <div><dt>Trạng thái</dt><dd><span class="status status-<%= status %>"><%= STATUS_LABELS[status] %></span></dd></div>
+      </dl>
+      <% if (a.instructions) { %><div class="alert alert-info"><%= a.instructions %></div><% } %>
+      <% if (status === 'upcoming') { %>
+        <p>Bài sẽ mở lúc <strong><%= time.formatDateTime(a.open_at) %></strong>.</p>
+      <% } else if (inProgress) { %>
+        <form method="post" action="/hoc-tap/bai/<%= a.id %>/bat-dau"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-primary btn-lg" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>Làm tiếp</button></form>
+        <p class="small muted">Câu trả lời của bạn được lưu tự động, có thể tiếp tục trên thiết bị khác.</p>
+      <% } else if (attemptsLeft > 0) { %>
+        <% if (status === 'overdue') { %><div class="alert alert-error">Đã quá hạn nộp — bạn vẫn có thể làm nhưng bài sẽ bị đánh dấu nộp trễ.</div><% } %>
+        <form method="post" action="/hoc-tap/bai/<%= a.id %>/bat-dau" <% if (duration) { %>data-confirm="Bắt đầu làm bài? Thời gian <%= duration %> phút được tính từ lúc bấm."<% } %>>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-primary btn-lg" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><%= attemptsUsed ? 'Làm lại' : 'Bắt đầu làm bài' %></button>
+        </form>
+        <% if (duration) { %><p class="small muted">Hết giờ bạn vẫn nộp được nhưng bài bị đánh dấu nộp trễ.</p><% } %>
+      <% } else { %>
+        <p class="muted">Bạn đã dùng hết số lần làm bài.</p>
+      <% } %>
+    </div>
+    <% const submitted = attempts.filter(function (t) { return t.status === 'submitted'; }); %>
+    <% if (submitted.length) { %>
+      <h2 class="section-title section-gap">Các lần đã nộp</h2>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th scope="col">Lần</th><th scope="col">Nộp lúc</th><th scope="col">Điểm</th><th scope="col"><span class="sr-only">Xem</span></th></tr></thead>
+        <tbody><% submitted.forEach(function (t, i) { const s10 = t.score / t.max_score * 10; %>
+          <tr><td><%= i + 1 %><% if (counted && counted.id === t.id) { %> <span class="badge badge-success">Được tính</span><% } %></td><td class="small"><%= time.formatDateTime(t.submitted_at) %><% if (t.is_late) { %> <span class="badge badge-warning">Trễ</span><% } %></td>
+            <td><span class="score <%= s10 >= 8 ? 'is-good' : s10 >= 5 ? 'is-ok' : 'is-low' %>"><%= score(t.score) %>/<%= score(t.max_score) %></span></td>
+            <td class="row-actions"><a class="btn btn-ghost btn-sm" href="/hoc-tap/ket-qua/<%= t.id %>">Xem kết quả</a></td></tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/foot') %>
