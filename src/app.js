@@ -28,6 +28,22 @@ function buildFontsCss() {
     .join('\n');
 }
 
+// Phiên bản tài nguyên tĩnh (băm nội dung CSS/JS) gắn vào URL để trình duyệt tải bản mới sau mỗi lần cập nhật.
+function computeAssetVersion() {
+  const crypto = require('node:crypto');
+  const hash = crypto.createHash('sha1');
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(css|js)$/.test(entry.name)) hash.update(fs.readFileSync(full));
+    }
+  };
+  walk(path.join(__dirname, '..', 'public'));
+  return hash.digest('hex').slice(0, 10);
+}
+const assetVersion = computeAssetVersion();
+
 const app = express();
 
 app.set('view engine', 'ejs');
@@ -70,6 +86,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use((req, res, next) => {
   Object.assign(res.locals, {
     siteName: config.siteName,
+    assetVersion,
     levels: LEVELS,
     currentPath: req.path,
     user: null,

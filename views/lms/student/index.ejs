@@ -4,7 +4,7 @@
   <div class="container admin-split">
     <div>
       <h2 class="section-title">Cần làm <% if (todo.length) { %><span class="count-pill"><%= todo.length %></span><% } %></h2>
-      <% if (!todo.length) { %><div class="empty-state"><p><%= classes.length ? 'Bạn đã hoàn thành mọi bài được giao. Tuyệt vời!' : 'Bạn chưa ở lớp nào. Nhập mã lớp do giáo viên cung cấp ở khung bên cạnh.' %></p></div><% } else { %>
+      <% if (!todo.length) { %><div class="empty-state"><p><%= classes.length ? 'Bạn đã hoàn thành mọi bài được giao. Tuyệt vời!' : (isStaff ? 'Đây là trang của học viên. Để tạo lớp và mã lớp, vào Quản trị → Lớp học.' : 'Bạn chưa ở lớp nào. Nhập mã lớp do giáo viên cung cấp ở khung bên cạnh.') %></p></div><% } else { %>
         <ul class="assign-list"><% todo.forEach(function (a) { %><%- include('../partials/assignment-card', { a: a }) %><% }) %></ul>
       <% } %>
       <% if (upcoming.length) { %>
@@ -26,6 +26,10 @@
         <h2 class="h3">Vào lớp</h2>
         <div class="field"><label for="code">Mã lớp (6 ký tự)</label><input id="code" name="code" type="text" maxlength="8" autocomplete="off" required class="code-input" placeholder="VD: K7M2QA"></div>
         <button class="btn btn-primary btn-block" type="submit">Vào lớp</button>
+        <p class="field-hint">Mã lớp do giáo viên tạo và gửi cho bạn.</p>
+        <% if (isStaff) { %>
+          <div class="alert alert-info small">Bạn là giáo viên: tạo lớp và lấy mã tại <a href="/quan-tri/lop"><strong>Quản trị → Lớp học</strong></a>.</div>
+        <% } %>
       </form>
       <section class="card">
         <h2 class="h3">Lớp của tôi</h2>
