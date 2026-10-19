@@ -887,3 +887,22 @@ a.card:hover .level-meta .icon { transform: translateX(3px); }
   .nav-account .btn-sm { padding-inline: 10px; }
   .nav-account .btn .icon { margin: 0; }
 }
+
+/* ---------- Mô phỏng: ô nhập số, phóng to ---------- */
+.slider.has-number { grid-template-columns: 1fr auto auto; align-items: center; }
+.slider-number {
+  width: 5.5em; min-height: 32px; padding: 2px 8px; font: 600 0.875rem/1 var(--font-heading); text-align: right;
+  color: var(--color-fg); background: var(--color-surface); border: 1.5px solid var(--color-border-strong); border-radius: var(--radius-sm);
+}
+.slider-number:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgb(99 102 241 / 0.2); outline: none; }
+.slider-number.is-clamped { border-color: var(--color-warning); }
+.sim.is-expanded {
+  position: fixed; inset: 0; z-index: 1000; margin: 0; border-radius: 0; border: 0; overflow: auto;
+  align-content: start; padding: var(--space-4); background: var(--color-surface);
+}
+.sim.is-expanded .sim-stage { display: flex; flex-direction: column; justify-content: center; }
+.sim.is-expanded .sim-canvas { width: min(100%, calc((100vh - 90px) * 1.8)); margin-inline: auto; }
+@media (min-width: 960px) { .sim.is-expanded { grid-template-columns: minmax(0, 1fr) 340px; } }
+.sim:fullscreen { overflow: auto; }
+body.sim-open { overflow: hidden; }
+.slider .slider-number { grid-column: auto; width: 5.5em; height: 32px; cursor: text; accent-color: auto; }

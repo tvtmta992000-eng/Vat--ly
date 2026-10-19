@@ -253,7 +253,11 @@ router.post('/hoc-tap/luyen-tap', action(async (req, res) => {
   const perTopic = Math.min(10, Math.max(3, toInt(req.body.per_topic) || 5));
   const practice = await lms.createPractice(req.user.id, plan, { createdBy: req.user.id, perTopic });
   if (!practice) throw new LmsError('Ngân hàng chưa đủ câu hỏi cho chủ đề đã chọn.');
-  req.flash('success', `Đã tạo "${practice.title}" (${practice.questions} câu).`);
+  let msg = `Đã tạo "${practice.title}" (${practice.questions} câu).`;
+  if (practice.questions < practice.requested) {
+    msg += ` Ngân hàng hiện chỉ đủ ${practice.questions}/${practice.requested} câu cho các chủ đề đã chọn — giáo viên đang bổ sung thêm.`;
+  }
+  req.flash(practice.questions < practice.requested ? 'info' : 'success', msg);
   res.redirect(`/hoc-tap/bai/${practice.assignmentId}`);
 }, '/hoc-tap/luyen-tap'));
 
