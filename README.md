@@ -170,7 +170,7 @@ Giáo viên chỉ thấy lớp, đề, bài giao của mình; quản trị viên
 **Ngân hàng có sẵn** nằm trong `content/ngan-hang/` và được nạp tự động khi khởi động (câu đã có hoặc đã bị giáo viên xoá sẽ không nạp lại):
 
 - `de-tn-2026.js` — 56 câu từ đề TN THPT 2026 môn Vật lí (mã 0230, 0207). Đáp án và lời giải do website tự giải, giáo viên nên rà soát.
-- `chuyen-de-10-11-12.js` — 120 câu tự biên soạn cho 15 chủ đề lớp 10–12.
+- `chuyen-de-10-11-12.js`, `chuyen-de-bo-sung.js` — 300 câu tự biên soạn cho 15 chủ đề lớp 10–12.
 
 ```bash
 npm run nap-ngan-hang                              # nạp lại mọi file (bỏ qua câu đã có)
