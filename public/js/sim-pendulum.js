@@ -12,7 +12,7 @@
   var W = view.width;
   var H = view.height;
   var PIVOT = { x: W / 2, y: 36 };
-  var PX_PER_M = (H - 80) / 2.5;
+  var BOB_R = 16;
 
   var inputs = {
     length: root.querySelector('input[name="length"]'),
@@ -36,6 +36,48 @@
   var state;
   var running = false;
   var lastFrame = null;
+  var lastKey = null;
+
+  // Làm tròn tới khoảng 3 chữ số có nghĩa rồi chọn số chữ số thập phân tương ứng.
+  function fmtAuto(v, sig) {
+    sig = sig || 3;
+    var r = isFinite(v) ? Number(v.toPrecision(sig)) : v;
+    var a = Math.abs(r);
+    var digits = a > 1e-9 && isFinite(a) ? Math.max(0, Math.min(4, sig - 1 - Math.floor(Math.log10(a)))) : 0;
+    return VL.fmt(a > 1e-9 ? r : 0, digits);
+  }
+
+  function paramKey() {
+    return [inputs.length.value, inputs.gravity.value, inputs.angle.value].join('|');
+  }
+
+  function niceStep(span, count) {
+    var raw = span / count;
+    var pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    var n = raw / pow;
+    return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * pow;
+  }
+
+  // Khung nhìn theo các mức 1 – 2,5 – 5 × 10ⁿ mét: trong cùng một mức, đổi chiều dài vẫn thấy dây dài/ngắn đi.
+  function viewSpan(l) {
+    var pow = Math.pow(10, Math.floor(Math.log10(l)));
+    var n = l / pow;
+    return (n <= 1 + 1e-9 ? 1 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * pow;
+  }
+
+  // Tỉ lệ px/m tính theo chiều dài dây và biên độ để con lắc luôn vừa khung.
+  function pxPerM(p) {
+    var down = (H - PIVOT.y - BOB_R - 12) / viewSpan(p.l);
+    var side = (W / 2 - 90) / (p.l * Math.max(Math.sin(p.theta0), 0.05));
+    return Math.min(down, side);
+  }
+
+  // Chu kì nhỏ quá thì chiếu chậm, lớn quá thì tua nhanh (chu kì trên màn hình khoảng 0,8–8 s).
+  function playbackRate(p) {
+    var T = 2 * Math.PI * Math.sqrt(p.l / p.g);
+    var rate = T / Math.max(0.8, Math.min(8, T));
+    return rate > 0.8 && rate < 1.25 ? 1 : rate;
+  }
 
   function params() {
     return {
@@ -48,6 +90,7 @@
   function reset() {
     var p = params();
     state = { theta: p.theta0, omega: 0, t: 0, lastCrossing: null, periods: [], trail: [] };
+    lastKey = paramKey();
     updateLabels();
     readout.measured.textContent = '—';
     readout.count.textContent = '0';
@@ -56,10 +99,10 @@
 
   function updateLabels() {
     var p = params();
-    outputs.length.textContent = VL.fmt(p.l, 2) + ' m';
-    outputs.gravity.textContent = VL.fmt(p.g, 2) + ' m/s²';
-    outputs.angle.textContent = inputs.angle.value + '°';
-    readout.theory.textContent = VL.fmt(2 * Math.PI * Math.sqrt(p.l / p.g), 3) + ' s';
+    outputs.length.textContent = fmtAuto(p.l) + ' m';
+    outputs.gravity.textContent = fmtAuto(p.g) + ' m/s²';
+    outputs.angle.textContent = fmtAuto(parseFloat(inputs.angle.value)) + '°';
+    readout.theory.textContent = fmtAuto(2 * Math.PI * Math.sqrt(p.l / p.g), 4) + ' s';
     presets.forEach(function (b) {
       b.setAttribute('aria-pressed', String(Math.abs(parseFloat(b.dataset.gravity) - p.g) < 0.02));
     });
@@ -93,9 +136,10 @@
     }
   }
 
-  function bobPosition() {
-    var lpx = params().l * PX_PER_M;
-    return { x: PIVOT.x + lpx * Math.sin(state.theta), y: PIVOT.y + lpx * Math.cos(state.theta) };
+  function bobPosition(theta) {
+    var p = params();
+    var lpx = p.l * pxPerM(p);
+    return { x: PIVOT.x + lpx * Math.sin(theta), y: PIVOT.y + lpx * Math.cos(theta) };
   }
 
   function draw() {
@@ -104,22 +148,29 @@
     var accent = VL.color('--color-accent') || '#ea580c';
     ctx.clearRect(0, 0, W, H);
 
-    // Thước đo chiều dài
+    // Thước đo chiều dài: bước chia "đẹp" theo tỉ lệ hiện tại
+    var scale = pxPerM(p);
+    var tick = niceStep((H - PIVOT.y - 20) / scale, 5);
+    var digits = Math.max(0, Math.min(4, -Math.floor(Math.log10(tick) + 1e-9)));
     ctx.strokeStyle = '#dfe3f0';
     ctx.fillStyle = '#5b6478';
     ctx.font = '12px "Noto Sans", sans-serif';
     ctx.lineWidth = 1;
-    for (var m = 0.5; m <= 2.5; m += 0.5) {
-      var y = PIVOT.y + m * PX_PER_M;
+    ctx.beginPath();
+    ctx.moveTo(30, PIVOT.y);
+    ctx.lineTo(30, H - 10);
+    ctx.stroke();
+    for (var i = 1; PIVOT.y + i * tick * scale <= H - 8 && i < 50; i++) {
+      var y = PIVOT.y + i * tick * scale;
       ctx.beginPath();
       ctx.moveTo(24, y);
       ctx.lineTo(36, y);
       ctx.stroke();
-      ctx.fillText(VL.fmt(m, 1) + ' m', 40, y + 4);
+      ctx.fillText(VL.fmt(i * tick, digits) + ' m', 40, y + 4);
     }
 
     // Đường thẳng đứng và cung biên độ
-    var lpx = p.l * PX_PER_M;
+    var lpx = p.l * scale;
     ctx.setLineDash([4, 6]);
     ctx.strokeStyle = '#c7cde0';
     ctx.beginPath();
@@ -135,8 +186,9 @@
     ctx.fillStyle = '#334155';
     ctx.fillRect(PIVOT.x - 60, PIVOT.y - 10, 120, 8);
 
-    // Vết chuyển động
-    state.trail.forEach(function (pt, i) {
+    // Vết chuyển động (lưu theo góc nên luôn khớp tỉ lệ hiện tại)
+    state.trail.forEach(function (theta, i) {
+      var pt = bobPosition(theta);
       ctx.fillStyle = 'rgba(234, 88, 12,' + (i / state.trail.length) * 0.35 + ')';
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
@@ -144,7 +196,7 @@
     });
 
     // Dây và vật nặng
-    var bob = bobPosition();
+    var bob = bobPosition(state.theta);
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -153,7 +205,7 @@
     ctx.stroke();
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.arc(bob.x, bob.y, 16, 0, Math.PI * 2);
+    ctx.arc(bob.x, bob.y, BOB_R, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 3;
@@ -164,22 +216,31 @@
     ctx.font = '600 14px "Be Vietnam Pro", sans-serif';
     ctx.fillText('θ = ' + VL.fmt((state.theta * 180) / Math.PI, 1) + '°', W - 130, 30);
     ctx.fillText('t = ' + VL.fmt(state.t, 2) + ' s', W - 130, 52);
+    var rate = playbackRate(p);
+    if (rate !== 1) {
+      ctx.fillStyle = '#5b6478';
+      ctx.font = '12px "Noto Sans", sans-serif';
+      ctx.fillText(rate < 1 ? 'Chiếu chậm ' + fmtAuto(1 / rate, 2) + ' lần' : 'Tua nhanh ' + fmtAuto(rate, 2) + ' lần', W - 130, 72);
+    }
   }
 
   function frame(now) {
     if (!running) return;
-    var elapsed = lastFrame === null ? 0 : Math.min((now - lastFrame) / 1000, 0.05);
+    var p = params();
+    var elapsed = lastFrame === null ? 0 : Math.min((now - lastFrame) / 1000, 0.05) * playbackRate(p);
     lastFrame = now;
-    var substeps = 8;
+    // Số bước con đủ nhỏ so với tần số góc (ω·dt ≤ 0,05) để RK4 luôn ổn định.
+    var omega0 = Math.sqrt(p.g / p.l);
+    var substeps = Math.max(8, Math.min(5000, Math.ceil((elapsed * omega0) / 0.05)));
     for (var i = 0; i < substeps; i++) step(elapsed / substeps);
 
-    state.trail.push(bobPosition());
+    state.trail.push(state.theta);
     if (state.trail.length > 40) state.trail.shift();
 
     if (state.periods.length) {
       var recent = state.periods.slice(-3);
       var avg = recent.reduce(function (a, b) { return a + b; }, 0) / recent.length;
-      readout.measured.textContent = VL.fmt(avg, 3) + ' s';
+      readout.measured.textContent = fmtAuto(avg, 4) + ' s';
     }
     readout.count.textContent = String(state.periods.length);
     draw();
@@ -198,6 +259,12 @@
 
   Object.keys(inputs).forEach(function (key) {
     inputs[key].addEventListener('input', function () {
+      // Giá trị không đổi (ví dụ khi phóng to khung hình): chỉ vẽ lại, không đặt lại dao động.
+      if (paramKey() === lastKey) {
+        updateLabels();
+        draw();
+        return;
+      }
       setRunning(false);
       reset();
     });

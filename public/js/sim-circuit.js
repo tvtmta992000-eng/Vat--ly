@@ -46,6 +46,26 @@
   var phase = { main: 0, b1: 0, b2: 0 };
   var last = null;
 
+  // Làm tròn tới khoảng 3 chữ số có nghĩa rồi chọn số chữ số thập phân tương ứng.
+  function fmtAuto(v, sig) {
+    sig = sig || 3;
+    var r = isFinite(v) ? Number(v.toPrecision(sig)) : v;
+    var a = Math.abs(r);
+    var digits = a > 1e-9 && isFinite(a) ? Math.max(0, Math.min(4, sig - 1 - Math.floor(Math.log10(a)))) : 0;
+    return VL.fmt(a > 1e-9 ? r : 0, digits);
+  }
+
+  // Ghi giá trị kèm tiền tố SI (µ, m, k, M, G) cho gọn: 0,005 A → 5,00 mA; 250000 Ω → 250 kΩ.
+  function withUnit(v, unit) {
+    var a = Math.abs(v);
+    if (a >= 1e9) return fmtAuto(v / 1e9) + ' G' + unit;
+    if (a >= 1e6) return fmtAuto(v / 1e6) + ' M' + unit;
+    if (a >= 1e4) return fmtAuto(v / 1e3) + ' k' + unit;
+    if (a > 1e-12 && a < 1e-4) return fmtAuto(v * 1e6) + ' µ' + unit;
+    if (a >= 1e-4 && a < 0.1) return fmtAuto(v * 1e3) + ' m' + unit;
+    return fmtAuto(v) + ' ' + unit;
+  }
+
   function mode() {
     var checked = root.querySelector('input[name="mode"]:checked');
     return checked ? checked.value : 'series';
@@ -58,7 +78,7 @@
     var R2 = parseFloat(inputs.r2.value);
     var parallel = mode() === 'parallel';
     var R = parallel ? (R1 * R2) / (R1 + R2) : R1 + R2;
-    var I = E / (R + r);
+    var I = R + r > 0 ? E / (R + r) : 0;
     var U = I * R;
     return {
       E: E, r: r, R1: R1, R2: R2, R: R, I: I, U: U, P: I * I * R, parallel: parallel,
@@ -69,14 +89,14 @@
 
   function updateLabels() {
     var s = solve();
-    outputs.emf.textContent = VL.fmt(s.E, 1) + ' V';
-    outputs.internal.textContent = VL.fmt(s.r, 1) + ' Ω';
-    outputs.r1.textContent = s.R1 + ' Ω';
-    outputs.r2.textContent = s.R2 + ' Ω';
-    readout.rtotal.textContent = VL.fmt(s.R, 2) + ' Ω';
-    readout.current.textContent = VL.fmt(s.I, 2) + ' A';
-    readout.voltage.textContent = VL.fmt(s.U, 2) + ' V';
-    readout.power.textContent = VL.fmt(s.P, 2) + ' W';
+    outputs.emf.textContent = withUnit(s.E, 'V');
+    outputs.internal.textContent = withUnit(s.r, 'Ω');
+    outputs.r1.textContent = withUnit(s.R1, 'Ω');
+    outputs.r2.textContent = withUnit(s.R2, 'Ω');
+    readout.rtotal.textContent = withUnit(s.R, 'Ω');
+    readout.current.textContent = withUnit(s.I, 'A');
+    readout.voltage.textContent = withUnit(s.U, 'V');
+    readout.power.textContent = withUnit(s.P, 'W');
   }
 
   // Các đường đi của dòng điện (polyline) theo chiều quy ước: từ cực dương đi ra.
@@ -146,7 +166,7 @@
     ctx.fillText(label, cx, cy + 5);
     ctx.font = '12px "Noto Sans", sans-serif';
     ctx.fillStyle = '#5b6478';
-    ctx.fillText(value + ' Ω · ' + VL.fmt(current, 2) + ' A', cx, cy - h / 2 - 8);
+    ctx.fillText(withUnit(value, 'Ω') + ' · ' + withUnit(current, 'A'), cx, cy - h / 2 - 8);
     ctx.textAlign = 'left';
   }
 
@@ -180,10 +200,12 @@
     ctx.fillStyle = '#1e1b4b';
     ctx.font = '700 14px "Be Vietnam Pro", sans-serif';
     ctx.fillText('+', LEFT + 32, 200);
-    ctx.fillText('ℰ = ' + VL.fmt(s.E, 1) + ' V', LEFT - 100, 196);
+    ctx.textAlign = 'right';
+    ctx.fillText('ℰ = ' + withUnit(s.E, 'V'), LEFT - 36, 196, LEFT - 44);
     ctx.font = '12px "Noto Sans", sans-serif';
     ctx.fillStyle = '#5b6478';
-    ctx.fillText('r = ' + VL.fmt(s.r, 1) + ' Ω', LEFT - 100, 216);
+    ctx.fillText('r = ' + withUnit(s.r, 'Ω'), LEFT - 36, 216, LEFT - 44);
+    ctx.textAlign = 'left';
 
     // Điện trở
     var centers = resistorCenters(s.parallel);
@@ -215,8 +237,9 @@
     ctx.textAlign = 'center';
     ctx.fillText('A', RIGHT, ay + 6);
     ctx.font = '700 15px "Be Vietnam Pro", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('I = ' + withUnit(s.I, 'A'), RIGHT - 32, ay + 6);
     ctx.textAlign = 'left';
-    ctx.fillText('I = ' + VL.fmt(s.I, 2) + ' A', RIGHT - 120, ay + 6);
 
     ctx.fillStyle = '#5b6478';
     ctx.font = '12px "Noto Sans", sans-serif';
@@ -232,8 +255,9 @@
         var pt = pointAt(p[k], d);
         if (k === 'main' && !s.parallel && pt[1] > 188 && pt[1] < 224) continue; // không vẽ qua nguồn
         if (insideResistor(pt, centers)) continue;
+        if (!(currents[k] > 0)) continue;
         ctx.beginPath();
-        ctx.arc(pt[0], pt[1], currents[k] > 0.005 ? 4 : 0, 0, Math.PI * 2);
+        ctx.arc(pt[0], pt[1], 4, 0, Math.PI * 2);
         ctx.fill();
       }
     });
@@ -244,10 +268,13 @@
     var dt = last === null ? 0 : Math.min((now - last) / 1000, 0.05);
     last = now;
     var s = solve();
-    var k = 45; // px/s cho mỗi ampe
-    phase.main += Math.min(s.I * k, 420) * dt;
-    phase.b1 += Math.min(s.I1 * k, 420) * dt;
-    phase.b2 += Math.min(s.I2 * k, 420) * dt;
+    // Tốc độ chấm tỉ lệ với cường độ (45 px/s mỗi ampe như trước); dòng rất lớn hoặc rất nhỏ thì đổi tỉ lệ
+    // để chấm nhanh nhất chạy 20–300 px/s, các nhánh vẫn giữ đúng tỉ lệ dòng với nhau.
+    var Imax = Math.max(s.I, s.I1, s.I2);
+    var k = Imax > 0 ? Math.max(20, Math.min(300, 45 * Imax)) / Imax : 0;
+    phase.main = (phase.main + s.I * k * dt) % (DOT_SPACING * 1000);
+    phase.b1 = (phase.b1 + s.I1 * k * dt) % (DOT_SPACING * 1000);
+    phase.b2 = (phase.b2 + s.I2 * k * dt) % (DOT_SPACING * 1000);
     draw();
     requestAnimationFrame(frame);
   }

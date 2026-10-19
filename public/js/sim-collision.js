@@ -34,6 +34,7 @@
   var state;
   var running = false;
   var last = null;
+  var lastKey = null;
 
   function params() {
     return {
@@ -45,8 +46,26 @@
     };
   }
 
+  // Kích thước xe tăng theo log của khối lượng để 0,01 kg hay 1000 kg đều vừa khung.
   function cartWidth(m) {
-    return 40 + Math.sqrt(m) * 22;
+    return 62 + 16 * Math.log10(1 + 10 * m);
+  }
+
+  function cartHeight(m) {
+    return 36 + 6 * Math.log10(1 + 10 * m);
+  }
+
+  // Làm tròn tới khoảng 3 chữ số có nghĩa rồi chọn số chữ số thập phân tương ứng.
+  function fmtAuto(v, sig) {
+    sig = sig || 3;
+    var r = isFinite(v) ? Number(v.toPrecision(sig)) : v;
+    var a = Math.abs(r);
+    var digits = a > 1e-9 && isFinite(a) ? Math.max(0, Math.min(4, sig - 1 - Math.floor(Math.log10(a)))) : 0;
+    return VL.fmt(a > 1e-9 ? r : 0, digits);
+  }
+
+  function paramKey() {
+    return names.map(function (n) { return inputs[n].value; }).join('|');
   }
 
   function solve(p) {
@@ -60,10 +79,10 @@
 
   function updateLabels() {
     var p = params();
-    outputs.m1.textContent = VL.fmt(p.m1, 1) + ' kg';
-    outputs.m2.textContent = VL.fmt(p.m2, 1) + ' kg';
-    outputs.v1.textContent = VL.fmt(p.v1, 1) + ' m/s';
-    outputs.v2.textContent = VL.fmt(p.v2, 1) + ' m/s';
+    outputs.m1.textContent = fmtAuto(p.m1) + ' kg';
+    outputs.m2.textContent = fmtAuto(p.m2) + ' kg';
+    outputs.v1.textContent = fmtAuto(p.v1) + ' m/s';
+    outputs.v2.textContent = fmtAuto(p.v2) + ' m/s';
     outputs.e.textContent = VL.fmt(p.e, 2);
     presets.forEach(function (b) {
       b.setAttribute('aria-pressed', String(Math.abs(parseFloat(b.dataset.e) - p.e) < 0.001));
@@ -74,24 +93,33 @@
     if (p.v1 <= p.v2) {
       readout.v1p.textContent = '—';
       readout.v2p.textContent = '—';
-      readout.p.textContent = VL.fmt(pBefore, 1) + ' kg·m/s';
+      readout.p.textContent = fmtAuto(pBefore) + ' kg·m/s';
       readout.w.textContent = 'Hai xe không gặp nhau';
       return;
     }
     var after = solve(p);
     var wAfter = 0.5 * p.m1 * after.v1 * after.v1 + 0.5 * p.m2 * after.v2 * after.v2;
-    readout.v1p.textContent = VL.fmt(after.v1, 2) + ' m/s';
-    readout.v2p.textContent = VL.fmt(after.v2, 2) + ' m/s';
-    readout.p.textContent = VL.fmt(pBefore, 1) + ' → ' + VL.fmt(p.m1 * after.v1 + p.m2 * after.v2, 1) + ' kg·m/s';
+    readout.v1p.textContent = fmtAuto(after.v1) + ' m/s';
+    readout.v2p.textContent = fmtAuto(after.v2) + ' m/s';
+    readout.p.textContent = fmtAuto(pBefore) + ' → ' + fmtAuto(p.m1 * after.v1 + p.m2 * after.v2) + ' kg·m/s';
     var lost = wBefore - wAfter;
     readout.w.textContent =
-      VL.fmt(wBefore, 1) + ' → ' + VL.fmt(wAfter, 1) + ' J' + (lost > 0.05 ? ' (mất ' + VL.fmt(lost, 1) + ' J)' : '');
+      fmtAuto(wBefore) + ' → ' + fmtAuto(wAfter) + ' J' + (lost > 1e-3 * wBefore ? ' (mất ' + fmtAuto(lost) + ' J)' : '');
+  }
+
+  // Tốc độ lớn nhất (trước và sau va chạm) để chọn tỉ lệ thời gian và độ dài mũi tên.
+  function speedRef(p) {
+    var after = p.v1 > p.v2 ? solve(p) : { v1: p.v1, v2: p.v2 };
+    return Math.max(Math.abs(p.v1), Math.abs(p.v2), Math.abs(after.v1), Math.abs(after.v2));
   }
 
   function reset() {
     var p = params();
-    state = { x1: 3, x2: 9, v1: p.v1, v2: p.v2, collided: false, t: 0, after: 0, done: false };
-    // Đặt hai xe không chồng lên nhau dù khối lượng lớn.
+    // Chiếu chậm/tua nhanh để xe nhanh nhất đi khoảng 4 m mỗi giây trên màn hình.
+    var rate = Math.max(0.001, Math.min(20, 4 / Math.max(speedRef(p), 1e-6)));
+    if (rate > 0.8 && rate < 1.25) rate = 1;
+    state = { x1: 3, x2: 9, v1: p.v1, v2: p.v2, collided: false, t: 0, after: 0, done: false, rate: rate };
+    lastKey = paramKey();
     updateLabels();
     draw();
   }
@@ -114,14 +142,32 @@
     if (s.collided) s.after += dt;
     var out1 = s.x1 < -1 || s.x1 > 13;
     var out2 = s.x2 < -1 || s.x2 > 13;
-    if ((out1 && out2) || s.after > 3 || s.t > 12) s.done = true;
+    if ((out1 && out2) || s.after > 3 * s.rate || s.t > 12 * s.rate) s.done = true;
   }
 
-  function drawCart(x, m, v, color, label) {
+  function drawCart(x, m, v, color, label, vRef) {
     var w = cartWidth(m);
-    var h = 34 + Math.sqrt(m) * 6;
+    var h = cartHeight(m);
     var cx = X0 + x * PX_PER_M;
     var top = TRACK_Y - h - 12;
+    // Xe đã chạy ra ngoài khung: chỉ vẽ mũi tên chỉ hướng ở mép khung.
+    if (cx < -w / 2 || cx > W + w / 2) {
+      var side = cx < 0 ? -1 : 1;
+      var ex = side < 0 ? 14 : W - 14;
+      var ey = TRACK_Y - (label === 'Xe 1' ? 30 : 70); // hai xe cùng ra một phía không chồng nhãn
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(ex + side * 8, ey);
+      ctx.lineTo(ex - side * 6, ey - 10);
+      ctx.lineTo(ex - side * 6, ey + 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+      ctx.textAlign = side < 0 ? 'left' : 'right';
+      ctx.fillText(label + ' (ngoài khung)', ex - side * 12, ey - 16);
+      ctx.textAlign = 'left';
+      return;
+    }
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.roundRect(cx - w / 2, top, w, h, 8);
@@ -137,11 +183,11 @@
     ctx.textAlign = 'center';
     ctx.fillText(label, cx, top + h / 2 - 2);
     ctx.font = '12px "Noto Sans", sans-serif';
-    ctx.fillText(VL.fmt(m, 1) + ' kg', cx, top + h / 2 + 14);
+    ctx.fillText(fmtAuto(m) + ' kg', cx, top + h / 2 + 14);
 
-    // Vectơ vận tốc phía trên xe
-    if (Math.abs(v) > 0.01) {
-      var len = v * 18;
+    // Vectơ vận tốc phía trên xe: dài tối đa 90 px, tỉ lệ với tốc độ lớn nhất trong bài.
+    var len = (90 * v) / Math.max(vRef, 1e-9);
+    if (Math.abs(len) > 1) {
       var y = top - 18;
       ctx.strokeStyle = color;
       ctx.fillStyle = color;
@@ -158,7 +204,7 @@
       ctx.closePath();
       ctx.fill();
       ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
-      ctx.fillText(VL.fmt(v, 2) + ' m/s', cx + len / 2, y - 10);
+      ctx.fillText(fmtAuto(v) + ' m/s', Math.max(40, Math.min(W - 40, cx + len / 2)), y - 10);
     }
     ctx.textAlign = 'left';
   }
@@ -168,7 +214,7 @@
     var wBefore = 0.5 * p.m1 * p.v1 * p.v1 + 0.5 * p.m2 * p.v2 * p.v2;
     var after = p.v1 > p.v2 ? solve(p) : { v1: p.v1, v2: p.v2 };
     var wAfter = 0.5 * p.m1 * after.v1 * after.v1 + 0.5 * p.m2 * after.v2 * after.v2;
-    var max = Math.max(wBefore, 1);
+    var max = Math.max(wBefore, wAfter, 1e-12);
     var bx = W - 190;
     var by = 40;
     ctx.font = '12px "Noto Sans", sans-serif';
@@ -203,8 +249,9 @@
       ctx.fillText(m + ' m', x - 8, TRACK_Y + 24);
     }
 
-    drawCart(state.x1, p.m1, state.v1, primary, 'Xe 1');
-    drawCart(state.x2, p.m2, state.v2, accent, 'Xe 2');
+    var vRef = speedRef(p);
+    drawCart(state.x1, p.m1, state.v1, primary, 'Xe 1', vRef);
+    drawCart(state.x2, p.m2, state.v2, accent, 'Xe 2', vRef);
 
     ctx.font = '600 14px "Be Vietnam Pro", sans-serif';
     ctx.fillStyle = '#1e1b4b';
@@ -213,6 +260,10 @@
     ctx.font = '12px "Noto Sans", sans-serif';
     ctx.fillStyle = '#5b6478';
     ctx.fillText('Chiều dương: từ trái sang phải', 20, 50);
+    if (state.rate !== 1) {
+      var r = state.rate;
+      ctx.fillText((r < 1 ? 'Chiếu chậm ' + fmtAuto(1 / r, 2) : 'Tua nhanh ' + fmtAuto(r, 2)) + ' lần', 20, 68);
+    }
     drawBars(p);
   }
 
@@ -242,6 +293,12 @@
 
   names.forEach(function (n) {
     inputs[n].addEventListener('input', function () {
+      // Giá trị không đổi (ví dụ khi phóng to khung hình): chỉ vẽ lại, không đặt lại chuyển động.
+      if (paramKey() === lastKey) {
+        updateLabels();
+        draw();
+        return;
+      }
       setRunning(false);
       reset();
     });
