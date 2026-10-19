@@ -1,14 +1,14 @@
 <div class="sim-controls">
   <label class="slider"><span>Góc nghiêng $\alpha$</span> <output data-for="angle">30°</output>
-    <input type="range" name="angle" min="0" max="60" step="1" value="30"></label>
+    <input type="range" name="angle" min="0" max="90" step="1" value="30" data-hard-min="0" data-hard-max="90"></label>
   <label class="slider"><span>Khối lượng vật</span> <output data-for="mass">2,0 kg</output>
-    <input type="range" name="mass" min="0.5" max="10" step="0.5" value="2"></label>
+    <input type="range" name="mass" min="0.1" max="50" step="0.1" value="2" data-hard-min="0.01" data-hard-max="1000"></label>
   <label class="slider"><span>Hệ số ma sát nghỉ $\mu_n$</span> <output data-for="mus">0,50</output>
-    <input type="range" name="mus" min="0" max="1" step="0.01" value="0.5"></label>
+    <input type="range" name="mus" min="0" max="1.5" step="0.01" value="0.5" data-hard-min="0" data-hard-max="5"></label>
   <label class="slider"><span>Hệ số ma sát trượt $\mu_t$</span> <output data-for="muk">0,30</output>
-    <input type="range" name="muk" min="0" max="1" step="0.01" value="0.3"></label>
+    <input type="range" name="muk" min="0" max="1.5" step="0.01" value="0.3" data-hard-min="0" data-hard-max="5"></label>
   <label class="slider"><span>Lực kéo song song mặt dốc, hướng lên</span> <output data-for="pull">0 N</output>
-    <input type="range" name="pull" min="0" max="100" step="1" value="0"></label>
+    <input type="range" name="pull" min="0" max="500" step="1" value="0" data-hard-min="0" data-hard-max="100000"></label>
   <label class="check"><input type="checkbox" name="vectors" checked> Hiện vectơ lực</label>
 </div>
 <dl class="sim-readout">

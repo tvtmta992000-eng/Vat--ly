@@ -54,21 +54,34 @@
     return { x: p.v0 * Math.cos(p.alpha) * t, y: p.v0 * Math.sin(p.alpha) * t - 0.5 * p.g * t * t };
   }
 
+  // Làm tròn tới khoảng 3 chữ số có nghĩa rồi chọn số chữ số thập phân tương ứng.
+  function fmtAuto(v, sig) {
+    sig = sig || 3;
+    var r = isFinite(v) ? Number(v.toPrecision(sig)) : v;
+    var a = Math.abs(r);
+    var digits = a > 1e-9 && isFinite(a) ? Math.max(0, Math.min(6, sig - 1 - Math.floor(Math.log10(a)))) : 0;
+    return VL.fmt(a > 1e-9 ? r : 0, digits);
+  }
+
   function updateLabels() {
     var p = params();
-    outputs.speed.textContent = inputs.speed.value + ' m/s';
-    outputs.angle.textContent = inputs.angle.value + '°';
-    outputs.gravity.textContent = VL.fmt(p.g, 1) + ' m/s²';
-    readout.height.textContent = VL.fmt(p.height, 2) + ' m';
-    readout.range.textContent = VL.fmt(p.range, 2) + ' m';
-    readout.time.textContent = VL.fmt(p.tFlight, 2) + ' s';
+    outputs.speed.textContent = fmtAuto(p.v0) + ' m/s';
+    outputs.angle.textContent = fmtAuto(parseFloat(inputs.angle.value)) + '°';
+    outputs.gravity.textContent = fmtAuto(p.g) + ' m/s²';
+    readout.height.textContent = fmtAuto(p.height, 4) + ' m';
+    readout.range.textContent = fmtAuto(p.range, 4) + ' m';
+    readout.time.textContent = fmtAuto(p.tFlight, 4) + ' s';
   }
 
   // Tỉ lệ chung để mọi quỹ đạo (hiện tại và đã lưu) đều vừa khung hình.
+  // Khi ném ngang/thẳng đứng (tầm xa hoặc độ cao bằng 0) vẫn giữ một khung tối thiểu theo v0²/g.
   function worldScale() {
     var all = history.map(function (h) { return h.p; }).concat([params()]);
     var maxX = Math.max.apply(null, all.map(function (p) { return p.range; }));
     var maxY = Math.max.apply(null, all.map(function (p) { return p.height; }));
+    var ref = Math.max.apply(null, all.map(function (p) { return (p.v0 * p.v0) / p.g; })) * 0.05;
+    maxX = Math.max(maxX, ref, 1e-9);
+    maxY = Math.max(maxY, ref, 1e-9);
     var sx = (W - MARGIN.left - MARGIN.right) / (maxX * 1.05);
     var sy = (H - MARGIN.top - MARGIN.bottom) / (maxY * 1.15);
     return { s: Math.min(sx, sy), maxX: maxX };
@@ -79,6 +92,10 @@
     var pow = Math.pow(10, Math.floor(Math.log10(raw)));
     var n = raw / pow;
     return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * pow;
+  }
+
+  function stepDigits(step) {
+    return Math.max(0, Math.min(6, -Math.floor(Math.log10(step) + 1e-9)));
   }
 
   function toCanvas(pt, s) {
@@ -106,30 +123,38 @@
     var accent = VL.color('--color-accent') || '#ea580c';
     ctx.clearRect(0, 0, W, H);
 
-    // Lưới và trục toạ độ
-    var stepM = niceStep((W - MARGIN.left - MARGIN.right) / s);
+    // Lưới và trục toạ độ: bước lưới "đẹp" theo tỉ lệ hiện tại; quãng đường lớn thì ghi theo km.
+    var spanM = (W - MARGIN.left - MARGIN.right) / s;
+    var unit = spanM >= 20000 ? 1000 : 1;
+    var unitName = unit === 1000 ? 'km' : 'm';
+    var stepU = niceStep(spanM / unit);
+    var stepM = stepU * unit;
+    var digits = stepDigits(stepU);
     ctx.font = '12px "Noto Sans", sans-serif';
     ctx.fillStyle = '#5b6478';
     ctx.strokeStyle = '#e6e9f4';
     ctx.lineWidth = 1;
-    for (var x = 0; MARGIN.left + x * s <= W - MARGIN.right + 1; x += stepM) {
-      var cx = MARGIN.left + x * s;
+    ctx.textAlign = 'center';
+    for (var i = 0; MARGIN.left + i * stepM * s <= W - MARGIN.right + 1 && i < 100; i++) {
+      var cx = MARGIN.left + i * stepM * s;
       ctx.beginPath();
       ctx.moveTo(cx, MARGIN.top);
       ctx.lineTo(cx, H - MARGIN.bottom);
       ctx.stroke();
-      ctx.fillText(VL.fmt(x, stepM < 1 ? 1 : 0), cx - 6, H - MARGIN.bottom + 18);
+      ctx.fillText(VL.fmt(i * stepU, digits), cx, H - MARGIN.bottom + 18);
     }
-    for (var y = stepM; H - MARGIN.bottom - y * s >= MARGIN.top; y += stepM) {
-      var cy = H - MARGIN.bottom - y * s;
+    ctx.textAlign = 'right';
+    for (var j = 1; H - MARGIN.bottom - j * stepM * s >= MARGIN.top && j < 100; j++) {
+      var cy = H - MARGIN.bottom - j * stepM * s;
       ctx.beginPath();
       ctx.moveTo(MARGIN.left, cy);
       ctx.lineTo(W - MARGIN.right, cy);
       ctx.stroke();
-      ctx.fillText(VL.fmt(y, stepM < 1 ? 1 : 0), 14, cy + 4);
+      ctx.fillText(VL.fmt(j * stepU, digits), MARGIN.left - 11, cy + 4);
     }
-    ctx.fillText('x (m)', W - MARGIN.right - 34, H - 8);
-    ctx.fillText('y (m)', 10, MARGIN.top - 10);
+    ctx.textAlign = 'left';
+    ctx.fillText('x (' + unitName + ')', W - MARGIN.right - 40, H - 8);
+    ctx.fillText('y (' + unitName + ')', 10, MARGIN.top - 10);
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -146,7 +171,8 @@
     drawPath(p, s, p.tFlight, '#c7cde0', 1.5);
     ctx.setLineDash([]);
     var origin = toCanvas({ x: 0, y: 0 }, s);
-    var arrowLen = 40 + p.v0 * 1.5;
+    // Độ dài mũi tên tăng theo v0 nhưng có giới hạn để không tràn khung.
+    var arrowLen = 30 + (70 * p.v0) / (p.v0 + 25);
     var ax = origin.x + arrowLen * Math.cos(p.alpha);
     var ay = origin.y - arrowLen * Math.sin(p.alpha);
     ctx.strokeStyle = primary;
@@ -184,8 +210,9 @@
     if (flight.last === null) flight.last = now;
     var dt = Math.min((now - flight.last) / 1000, 0.05);
     flight.last = now;
-    // Giữ thời gian bay trên màn hình khoảng 1,5–4 giây dù thông số thế nào.
-    var speedUp = Math.max(1, flight.p.tFlight / 3);
+    // Giữ thời gian bay trên màn hình khoảng 1–3 giây dù thông số thế nào (tua nhanh hoặc chiếu chậm).
+    var shown = Math.max(1, Math.min(3, flight.p.tFlight));
+    var speedUp = flight.p.tFlight / shown;
     flight.t = Math.min(flight.t + dt * speedUp, flight.p.tFlight);
     draw();
     if (flight.t < flight.p.tFlight) {

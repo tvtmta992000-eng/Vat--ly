@@ -12,11 +12,10 @@
   var W = view.width;
   var H = view.height;
   var SPEED = 40; // cm/s
-  var WIDTH_CM = 40;
-  var PX_PER_CM = W / WIDTH_CM;
-  var GRID_W = 240;
+  var GRID_W = 320;
   var GRID_H = Math.round((GRID_W * H) / W);
-  var SLOW_MOTION = 0.15;
+  var CELLS_PER_LAMBDA = 8; // ít nhất 8 ô lưới trên một bước sóng (4 ô trên khoảng vân λ/2) để không bị răng cưa
+  var MAX_LINES = 40; // quá nhiều đường cực đại/cực tiểu thì không vẽ
 
   var field = document.createElement('canvas');
   field.width = GRID_W;
@@ -49,6 +48,28 @@
   var t = 0;
   var last = null;
 
+  // Làm tròn tới khoảng 3 chữ số có nghĩa rồi chọn số chữ số thập phân tương ứng.
+  function fmtAuto(v, sig) {
+    sig = sig || 3;
+    var r = isFinite(v) ? Number(v.toPrecision(sig)) : v;
+    var a = Math.abs(r);
+    var digits = a > 1e-9 && isFinite(a) ? Math.max(0, Math.min(6, sig - 1 - Math.floor(Math.log10(a)))) : 0;
+    return VL.fmt(a > 1e-9 ? r : 0, digits);
+  }
+
+  // Bề rộng khung nhìn (cm): đủ chứa hai nguồn và vài bước sóng, nhưng không quá nhiều bước sóng
+  // so với độ phân giải lưới. Mặc định (λ = 4 cm, S1S2 = 10 cm) là 40 cm như trước.
+  function viewport(p) {
+    var want = Math.max(p.two ? 2 * p.d : 0, 10 * p.lambda);
+    var widthCm = Math.min(want, (GRID_W / CELLS_PER_LAMBDA) * p.lambda);
+    return { widthCm: widthCm, scale: W / widthCm };
+  }
+
+  // Chiếu chậm để sóng trên màn hình có tần số khoảng 1,5 Hz.
+  function slowMotion(p) {
+    return Math.min(1, 1.5 / p.f);
+  }
+
   function params() {
     var checked = root.querySelector('input[name="sources"]:checked');
     var f = parseFloat(inputs.freq.value);
@@ -62,17 +83,18 @@
   }
 
   function sources(p) {
-    var cy = H / 2 / PX_PER_CM;
-    var cx = WIDTH_CM / 2;
+    var v = viewport(p);
+    var cy = H / 2 / v.scale;
+    var cx = v.widthCm / 2;
     return p.two ? [{ x: cx - p.d / 2, y: cy }, { x: cx + p.d / 2, y: cy }] : [{ x: cx, y: cy }];
   }
 
   function updateLabels() {
     var p = params();
-    outputs.freq.textContent = p.f + ' Hz';
-    outputs.dist.textContent = VL.fmt(p.d, 1) + ' cm';
-    outputs.amp.textContent = VL.fmt(p.A, 1) + ' cm';
-    readout.lambda.textContent = VL.fmt(p.lambda, 2) + ' cm';
+    outputs.freq.textContent = fmtAuto(p.f) + ' Hz';
+    outputs.dist.textContent = fmtAuto(p.d) + ' cm';
+    outputs.amp.textContent = fmtAuto(p.A) + ' cm';
+    readout.lambda.textContent = fmtAuto(p.lambda) + ' cm';
     root.querySelector('input[name="dist"]').disabled = !p.two;
     inputs.lines.disabled = !p.two;
     if (!p.two) {
@@ -82,7 +104,7 @@
       return;
     }
     var ratio = p.d / p.lambda;
-    readout.ratio.textContent = VL.fmt(ratio, 2);
+    readout.ratio.textContent = fmtAuto(ratio);
     var maxima = 2 * Math.ceil(ratio - 1e-9) - 1;
     var kMin = Math.floor(-ratio - 0.5) + 1;
     var kMax = Math.ceil(ratio - 0.5) - 1;
@@ -92,11 +114,15 @@
 
   function renderField(p) {
     var src = sources(p);
+    var v = viewport(p);
     var k = (2 * Math.PI) / p.lambda;
     var phase = 2 * Math.PI * p.f * t;
-    var cell = WIDTH_CM / GRID_W;
+    var cell = v.widthCm / GRID_W;
+    var damping = (25 * Math.max(v.widthCm, p.two ? p.d : 0)) / 40; // khoảng tắt dần tỉ lệ với khung nhìn
     var data = image.data;
     var norm = 1 / (2.4 * 2);
+    // Độ đậm màu theo biên độ, giới hạn để biên độ rất nhỏ/rất lớn vẫn thấy rõ vân.
+    var Avis = Math.max(0.3, Math.min(2, p.A));
     for (var j = 0; j < GRID_H; j++) {
       var y = (j + 0.5) * cell;
       for (var i = 0; i < GRID_W; i++) {
@@ -104,7 +130,7 @@
         var u = 0;
         for (var s = 0; s < src.length; s++) {
           var r = Math.hypot(x - src[s].x, y - src[s].y);
-          u += (p.A * Math.cos(phase - k * r)) / (1 + r / 25);
+          u += (Avis * Math.cos(phase - k * r)) / (1 + r / damping);
         }
         var v = Math.max(-1, Math.min(1, u * norm)); // −1 … 1
         var idx = (j * GRID_W + i) * 4;
@@ -122,6 +148,7 @@
 
   // Đường hypebol tập hợp điểm có d2 − d1 = c (tiêu điểm là hai nguồn).
   function hyperbola(p, c, dashed) {
+    var PX_PER_CM = viewport(p).scale;
     var focus = p.d / 2;
     var a = Math.abs(c) / 2;
     var cx = W / 2;
@@ -155,7 +182,9 @@
     renderField(p);
     var src = sources(p);
 
-    if (p.two && inputs.lines.checked) {
+    var v = viewport(p);
+    var tooMany = p.d / p.lambda > MAX_LINES;
+    if (p.two && inputs.lines.checked && !tooMany) {
       ctx.lineWidth = 1.5;
       ctx.strokeStyle = 'rgba(255, 237, 213, 0.85)';
       for (var k = -Math.floor(p.d / p.lambda); k <= Math.floor(p.d / p.lambda); k++) {
@@ -169,8 +198,27 @@
     }
 
     src.forEach(function (s, i) {
-      var x = s.x * PX_PER_CM;
-      var y = s.y * PX_PER_CM;
+      var x = s.x * v.scale;
+      var y = s.y * v.scale;
+      var name = p.two ? 'S' + (i + 1) : 'S';
+      // Nguồn nằm ngoài khung nhìn: vẽ mũi tên chỉ hướng ở mép.
+      if (x < 0 || x > W) {
+        var side = x < 0 ? -1 : 1;
+        var ex = side < 0 ? 12 : W - 12;
+        ctx.fillStyle = '#ea580c';
+        ctx.beginPath();
+        ctx.moveTo(ex + side * 8, y);
+        ctx.lineTo(ex - side * 6, y - 10);
+        ctx.lineTo(ex - side * 6, y + 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = '700 13px "Be Vietnam Pro", sans-serif';
+        ctx.textAlign = side < 0 ? 'left' : 'right';
+        ctx.fillText(name + ' (ngoài khung)', ex - side * 10, y - 16);
+        ctx.textAlign = 'left';
+        return;
+      }
       ctx.fillStyle = '#ea580c';
       ctx.beginPath();
       ctx.arc(x, y, 7, 0, Math.PI * 2);
@@ -180,21 +228,27 @@
       ctx.stroke();
       ctx.fillStyle = '#fff';
       ctx.font = '700 13px "Be Vietnam Pro", sans-serif';
-      ctx.fillText(p.two ? 'S' + (i + 1) : 'S', x - 8, y - 14);
+      // Hai nguồn: nhãn S1 lệch trái, S2 lệch phải để không chồng nhau khi hai nguồn rất gần.
+      ctx.textAlign = !p.two ? 'center' : i === 0 ? 'right' : 'left';
+      ctx.fillText(name, x + (!p.two ? 0 : i === 0 ? -1 : 1), y - 14);
+      ctx.textAlign = 'left';
     });
 
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
-    ctx.fillRect(10, H - 34, 250, 24);
-    ctx.fillStyle = '#fff';
+    var slow = slowMotion(p);
+    var info = 'Khung rộng ' + fmtAuto(v.widthCm) + ' cm · ' + (slow < 1 ? 'chiếu chậm ' + fmtAuto(1 / slow, 2) + ' lần' : 'tốc độ thật');
+    if (p.two && inputs.lines.checked && tooMany) info += ' · quá nhiều vân, không vẽ đường cực đại/cực tiểu';
     ctx.font = '12px "Noto Sans", sans-serif';
-    ctx.fillText('Khung rộng 40 cm · chiếu chậm ' + Math.round(1 / SLOW_MOTION) + ' lần', 18, H - 17);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+    ctx.fillRect(10, H - 34, Math.min(W - 20, ctx.measureText(info).width + 16), 24);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(info, 18, H - 17, W - 36);
   }
 
   function frame(now) {
     if (!running) return;
     var dt = last === null ? 0 : Math.min((now - last) / 1000, 0.05);
     last = now;
-    t += dt * SLOW_MOTION;
+    t += dt * slowMotion(params());
     draw();
     requestAnimationFrame(frame);
   }

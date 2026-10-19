@@ -11,8 +11,7 @@
   var ctx = view.ctx;
   var W = view.width;
   var H = view.height;
-  var BOX = { left: 40, top: 50, bottom: 350, maxWidth: 560 };
-  var V_MAX = 10;
+  var BOX = { left: 40, top: 50, bottom: 345, maxWidth: 560 };
   var MOLECULES_PER_DOT = 1e22;
   var K_B = 1.38e-23;
   var M_N2 = 4.65e-26; // khối lượng phân tử N₂ (kg) để tính tốc độ thật
@@ -45,12 +44,36 @@
   var hits = [];
   var running = !VL.reduceMotion;
   var last = null;
+  var boxRight = null; // vị trí pít-tông (px) lần vẽ trước, để co giãn các phân tử khi khung đổi tỉ lệ
+
+  // Làm tròn tới khoảng 3 chữ số có nghĩa rồi chọn số chữ số thập phân tương ứng.
+  function fmtAuto(v, sig) {
+    sig = sig || 3;
+    var r = isFinite(v) ? Number(v.toPrecision(sig)) : v;
+    var a = Math.abs(r);
+    var digits = a > 1e-9 && isFinite(a) ? Math.max(0, Math.min(6, sig - 1 - Math.floor(Math.log10(a)))) : 0;
+    return VL.fmt(a > 1e-9 ? r : 0, digits);
+  }
+
+  function niceStep(span, count) {
+    var raw = span / count;
+    var pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    var n = raw / pow;
+    return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * pow;
+  }
+
+  // Thể tích ứng với xi lanh dài nhất trên màn hình: lấy theo giới hạn hiện tại của thanh trượt
+  // (đọc trực tiếp, vì thanh trượt có thể được mở rộng), nhưng pít-tông không hẹp hơn 10% chiều dài.
+  function vDisplay() {
+    var V = parseFloat(inputs.vol.value);
+    return Math.min(Math.max(parseFloat(inputs.vol.max) || V, V), 10 * V);
+  }
 
   function params() {
     return {
       T: parseFloat(inputs.temp.value),
       V: parseFloat(inputs.vol.value),
-      N: parseInt(inputs.count.value, 10),
+      N: Math.max(1, Math.round(parseFloat(inputs.count.value))),
     };
   }
 
@@ -65,10 +88,23 @@
   }
 
   function pistonX() {
-    return BOX.left + (BOX.maxWidth * parseFloat(inputs.vol.value)) / V_MAX;
+    return BOX.left + (BOX.maxWidth * parseFloat(inputs.vol.value)) / vDisplay();
+  }
+
+  // Pít-tông dịch chuyển (hoặc khung đổi tỉ lệ): co giãn vị trí các phân tử theo chiều ngang để chúng luôn ở trong xi lanh.
+  function syncBox() {
+    var right = pistonX();
+    if (boxRight !== null && Math.abs(right - boxRight) > 1e-9) {
+      var k = (right - BOX.left) / (boxRight - BOX.left);
+      particles.forEach(function (p) {
+        p.x = Math.min(right, BOX.left + (p.x - BOX.left) * k);
+      });
+    }
+    boxRight = right;
   }
 
   function spawn(n) {
+    syncBox();
     var sd = sigma(currentT);
     var right = pistonX();
     for (var i = 0; i < n; i++) {
@@ -104,31 +140,33 @@
   function formatPressure(pa) {
     var exp = Math.floor(Math.log10(pa));
     var mant = pa / Math.pow(10, exp);
-    return VL.fmt(mant, 2) + '·10' + String(exp).replace(/\d/g, function (d) { return '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]; }) + ' Pa';
+    var sup = String(exp).replace('-', '⁻').replace(/\d/g, function (d) { return '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]; });
+    return VL.fmt(mant, 2) + '·10' + sup + ' Pa';
   }
 
   function updateLabels() {
     var p = params();
-    outputs.temp.textContent = p.T + ' K';
-    outputs.vol.textContent = VL.fmt(p.V, 1) + ' lít';
+    outputs.temp.textContent = fmtAuto(p.T) + ' K';
+    outputs.vol.textContent = fmtAuto(p.V) + ' lít';
     outputs.count.textContent = String(p.N);
     var pt = theoryPressure(p);
-    readout.ptheory.textContent = formatPressure(pt) + ' (' + VL.fmt(pt / 101325, 2) + ' atm)';
+    readout.ptheory.textContent = formatPressure(pt) + ' (' + fmtAuto(pt / 101325) + ' atm)';
     var meanSpeed = Math.sqrt((8 * K_B * p.T) / (Math.PI * M_N2));
     readout.speed.textContent = '≈ ' + VL.fmt(meanSpeed, 0) + ' m/s (khí N₂)';
     var pm = pt * measuredRatio;
     readout.pmeas.textContent = formatPressure(pm);
-    readout.pvt.textContent = VL.fmt((pm * (p.V / 1000)) / p.T, 2) + ' J/K';
+    readout.pvt.textContent = fmtAuto((pm * (p.V / 1000)) / p.T) + ' J/K';
   }
 
   function step(dt) {
+    syncBox();
     var right = pistonX();
     var m = 1; // khối lượng mô phỏng
     particles.forEach(function (p) {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       if (p.x < BOX.left) {
-        p.x = 2 * BOX.left - p.x;
+        p.x = Math.min(right, 2 * BOX.left - p.x);
         p.vx = Math.abs(p.vx);
         impulse += 2 * m * p.vx;
       } else if (p.x > right) {
@@ -138,11 +176,11 @@
         if (hits.length < 40) hits.push({ x: right, y: p.y, life: 1 });
       }
       if (p.y < BOX.top) {
-        p.y = 2 * BOX.top - p.y;
+        p.y = Math.min(BOX.bottom, 2 * BOX.top - p.y);
         p.vy = Math.abs(p.vy);
         impulse += 2 * m * p.vy;
       } else if (p.y > BOX.bottom) {
-        p.y = 2 * BOX.bottom - p.y;
+        p.y = Math.max(BOX.top, 2 * BOX.bottom - p.y);
         impulse += 2 * m * Math.abs(p.vy);
         p.vy = -Math.abs(p.vy);
       }
@@ -174,6 +212,7 @@
   }
 
   function draw() {
+    syncBox();
     var right = pistonX();
     ctx.clearRect(0, 0, W, H);
 
@@ -213,10 +252,27 @@
 
     ctx.fillStyle = '#1e1b4b';
     ctx.font = '600 13px "Be Vietnam Pro", sans-serif';
-    ctx.fillText('V = ' + VL.fmt(parseFloat(inputs.vol.value), 1) + ' lít   T = ' + currentT + ' K', BOX.left, 32);
+    ctx.fillText('V = ' + fmtAuto(parseFloat(inputs.vol.value)) + ' lít   T = ' + fmtAuto(currentT) + ' K', BOX.left, 32);
     ctx.font = '12px "Noto Sans", sans-serif';
     ctx.fillStyle = '#5b6478';
-    ctx.fillText('Màu chấm: tím = chậm, cam = nhanh. Chấm sáng trên pít-tông: phân tử va vào thành.', BOX.left, H - 22);
+    // Thước thể tích dưới xi lanh (tỉ lệ đổi theo giới hạn thanh trượt)
+    var vd = vDisplay();
+    var tick = niceStep(vd, 5);
+    var digits = Math.max(0, Math.min(3, -Math.floor(Math.log10(tick) + 1e-9)));
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1;
+    ctx.textAlign = 'center';
+    for (var i = 0; i * tick <= vd + 1e-9 && i < 30; i++) {
+      var tx = BOX.left + (BOX.maxWidth * i * tick) / vd;
+      ctx.beginPath();
+      ctx.moveTo(tx, BOX.bottom + 3);
+      ctx.lineTo(tx, BOX.bottom + 9);
+      ctx.stroke();
+      ctx.fillText(VL.fmt(i * tick, digits), tx, BOX.bottom + 21);
+    }
+    ctx.textAlign = 'left';
+    ctx.fillText('lít', BOX.left + BOX.maxWidth + 22, BOX.bottom + 21);
+    ctx.fillText('Màu chấm: tím = chậm, cam = nhanh. Chấm sáng trên pít-tông: phân tử va vào thành.', BOX.left, H - 8);
   }
 
   var measureTimer = 0;
@@ -224,7 +280,9 @@
     if (!running) return;
     var dt = last === null ? 0 : Math.min((now - last) / 1000, 0.04);
     last = now;
-    for (var i = 0; i < 4; i++) step(dt / 4);
+    // Mỗi bước con, phân tử nhanh không đi quá ~6 px để va chạm với thành luôn đúng.
+    var n = Math.max(4, Math.min(60, Math.ceil((4 * sigma(currentT) * dt) / 6)));
+    for (var i = 0; i < n; i++) step(dt / n);
     measureTimer += dt;
     if (measureTimer > 0.5) {
       measureTimer = 0;
@@ -251,11 +309,8 @@
     if (!running) draw();
   });
   inputs.vol.addEventListener('input', function () {
-    // Pít-tông dịch vào: đẩy các phân tử vượt quá pít-tông về phía trong.
-    var right = pistonX();
-    particles.forEach(function (p) {
-      if (p.x > right) p.x = right - Math.random() * 10;
-    });
+    // Pít-tông dịch chuyển: co giãn vị trí các phân tử để tất cả nằm trong xi lanh.
+    syncBox();
     impulse = 0;
     impulseTime = 0;
     updateLabels();

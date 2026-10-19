@@ -4,11 +4,11 @@
     <label><input type="radio" name="type" value="diverging"><span>Phân kì</span></label>
   </div>
   <label class="slider"><span>Tiêu cự $|f|$</span> <output data-for="focal">12 cm</output>
-    <input type="range" name="focal" min="5" max="25" step="0.5" value="12"></label>
+    <input type="range" name="focal" min="2" max="100" step="0.5" value="12" data-hard-min="0.5" data-hard-max="1000"></label>
   <label class="slider"><span>Khoảng cách vật $d$</span> <output data-for="dist">30 cm</output>
-    <input type="range" name="dist" min="2" max="60" step="0.5" value="30"></label>
+    <input type="range" name="dist" min="1" max="200" step="0.5" value="30" data-hard-min="0.1" data-hard-max="2000"></label>
   <label class="slider"><span>Chiều cao vật $h$</span> <output data-for="height">3,0 cm</output>
-    <input type="range" name="height" min="1" max="6" step="0.5" value="3"></label>
+    <input type="range" name="height" min="0.5" max="20" step="0.5" value="3" data-hard-min="0.1" data-hard-max="100"></label>
 </div>
 <dl class="sim-readout">
   <div><dt>Khoảng cách ảnh $d'$</dt><dd data-out="dimg">—</dd></div>

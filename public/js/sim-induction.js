@@ -21,7 +21,9 @@
   var X_MIN = 90;
   var X_MAX = 690;
   var EMF_SCALE = 6; // quy đổi sang mV
-  var EMF_FULL = 60; // mV ứng với kim lệch hết thang
+  var EMF_FULL = 60; // mV: thang đo nhỏ nhất của điện kế, cũng là mức đèn sáng hết cỡ
+  var MAX_DRAWN_TURNS = 40; // vẽ tối đa 40 vòng; nhiều hơn thì các vòng vẽ đại diện
+  var COIL_MAX_W = 160; // bề rộng tối đa của cuộn dây trên màn hình (px)
 
   var inputs = {
     turns: root.querySelector('input[name="turns"]'),
@@ -53,6 +55,34 @@
   var dragOffset = 0;
   var dashOffset = 0;
   var last = null;
+  var emfPeak = 0; // đỉnh |e| gần đây (giảm dần) để điện kế tự đổi thang đo
+
+  // Làm tròn tới khoảng 3 chữ số có nghĩa rồi chọn số chữ số thập phân tương ứng.
+  function fmtAuto(v, sig) {
+    sig = sig || 3;
+    var r = isFinite(v) ? Number(v.toPrecision(sig)) : v;
+    var a = Math.abs(r);
+    var digits = a > 1e-9 && isFinite(a) ? Math.max(0, Math.min(6, sig - 1 - Math.floor(Math.log10(a)))) : 0;
+    return VL.fmt(a > 1e-9 ? r : 0, digits);
+  }
+
+  // Suất điện động (mV) ghi theo mV hoặc V cho gọn.
+  function fmtEmf(mv) {
+    return Math.abs(mv) >= 1000 ? fmtAuto(mv / 1000) + ' V' : fmtAuto(mv) + ' mV';
+  }
+
+  function turns() {
+    return Math.max(1, Math.round(parseFloat(inputs.turns.value)));
+  }
+
+  // Thang đo điện kế: 60 mV như cũ; khi e vượt thang thì chuyển lên giá trị "đẹp" 1–2–5 × 10ⁿ mV.
+  function meterRange() {
+    var need = emfPeak * 1.05;
+    if (need <= EMF_FULL) return EMF_FULL;
+    var pow = Math.pow(10, Math.floor(Math.log10(need)));
+    var n = need / pow;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
+  }
 
   function polarity() {
     var checked = root.querySelector('input[name="pole"]:checked');
@@ -67,15 +97,15 @@
   }
 
   function updateLabels() {
-    var N = parseInt(inputs.turns.value, 10);
+    var N = turns();
     outputs.turns.textContent = N + ' vòng';
     var sp = parseFloat(inputs.speed.value);
-    outputs.speed.textContent = sp < 0.8 ? 'Chậm' : sp < 1.8 ? 'Vừa' : 'Nhanh';
+    outputs.speed.textContent = fmtAuto(sp, 2) + '× · ' + (sp < 0.8 ? 'chậm' : sp < 1.8 ? 'vừa' : 'nhanh');
     var pos = (magX - X_MIN) / (X_MAX - X_MIN);
-    outputs.pos.textContent = Math.round(pos * 100) + '%';
+    outputs.pos.textContent = Math.round(Math.max(0, Math.min(1, pos)) * 100) + '%';
     var phi = flux(magX);
     readout.flux.textContent = VL.fmt(phi, 2);
-    readout.emf.textContent = VL.fmt(emf, 1) + ' mV';
+    readout.emf.textContent = fmtEmf(emf);
     if (Math.abs(emf) < 0.5) {
       readout.dir.textContent = 'Không có dòng điện';
       readout.lenz.textContent = 'Từ thông không đổi → không có dòng cảm ứng.';
@@ -94,18 +124,20 @@
   }
 
   function drawCoil(N, front) {
-    // Vẽ nửa sau (front = false) hoặc nửa trước (front = true) của các vòng dây
-    var spacing = 14;
-    var start = COIL_X - ((N - 1) * spacing) / 2;
-    ctx.lineWidth = 4;
-    for (var i = 0; i < N; i++) {
+    // Vẽ nửa sau (front = false) hoặc nửa trước (front = true) của các vòng dây.
+    // Nhiều vòng thì thu hẹp khoảng cách và chỉ vẽ tối đa MAX_DRAWN_TURNS vòng đại diện.
+    var shown = Math.min(N, MAX_DRAWN_TURNS);
+    var spacing = shown > 1 ? Math.min(14, COIL_MAX_W / (shown - 1)) : 14;
+    var start = COIL_X - ((shown - 1) * spacing) / 2;
+    ctx.lineWidth = shown > 15 ? 2.5 : 4;
+    for (var i = 0; i < shown; i++) {
       var x = start + i * spacing;
       ctx.strokeStyle = front ? '#b45309' : '#d6a26a';
       ctx.beginPath();
       ctx.ellipse(x, AXIS_Y, 16, COIL_R, 0, front ? -Math.PI / 2 : Math.PI / 2, front ? Math.PI / 2 : (3 * Math.PI) / 2);
       ctx.stroke();
     }
-    return { left: start, right: start + (N - 1) * spacing };
+    return { left: start, right: start + (shown - 1) * spacing };
   }
 
   function drawMagnet() {
@@ -150,7 +182,8 @@
       ctx.strokeStyle = '#94a3b8';
       ctx.stroke();
     }
-    var frac = Math.max(-1, Math.min(1, emf / EMF_FULL));
+    var range = meterRange();
+    var frac = Math.max(-1, Math.min(1, emf / range));
     var angle = -Math.PI / 2 + frac * (Math.PI * 0.42);
     ctx.strokeStyle = '#dc2626';
     ctx.lineWidth = 3;
@@ -162,6 +195,9 @@
     ctx.font = '700 13px "Be Vietnam Pro", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('G', cx, cy - 14);
+    ctx.font = '11px "Noto Sans", sans-serif';
+    ctx.fillStyle = '#5b6478';
+    ctx.fillText('thang ±' + fmtEmf(range), cx, cy - 58);
     ctx.textAlign = 'left';
   }
 
@@ -194,7 +230,7 @@
   }
 
   function draw() {
-    var N = parseInt(inputs.turns.value, 10);
+    var N = turns();
     ctx.clearRect(0, 0, W, H);
 
     var ends = drawCoil(N, false);
@@ -229,21 +265,26 @@
 
     ctx.fillStyle = '#5b6478';
     ctx.font = '12px "Noto Sans", sans-serif';
-    ctx.fillText('Cuộn dây ' + N + ' vòng', COIL_X - 40, AXIS_Y + COIL_R + 26);
+    ctx.textAlign = 'center';
+    ctx.fillText('Cuộn dây ' + N + ' vòng' + (N > MAX_DRAWN_TURNS ? ' (vẽ ' + MAX_DRAWN_TURNS + ' vòng đại diện)' : ''), COIL_X, AXIS_Y + COIL_R + 26);
+    ctx.textAlign = 'left';
     ctx.fillText('Chiều dòng điện xét khi nhìn cuộn dây từ bên trái.', 20, H - 14);
   }
 
   function updatePhysics(dt) {
     var phi = flux(magX);
     if (prevFlux !== null && dt > 0) {
-      var N = parseInt(inputs.turns.value, 10);
+      var N = turns();
       var rate = (phi - prevFlux) / dt;
       dFlux = phi - prevFlux;
       var instant = -N * rate * EMF_SCALE;
       emf = emf * 0.6 + instant * 0.4; // làm mượt
     }
     prevFlux = phi;
-    dashOffset -= emf * dt * 2;
+    // Đỉnh |e| giảm dần trong vài giây để thang đo trở lại khi dòng điện nhỏ đi.
+    emfPeak = Math.max(Math.abs(emf), emfPeak * Math.exp(-dt / 3));
+    // Tốc độ chạy của nét đứt có giới hạn; lấy phần dư để số không lớn dần.
+    dashOffset = (dashOffset - Math.max(-120, Math.min(120, emf)) * dt * 2) % 16;
   }
 
   function frame(now) {
@@ -303,9 +344,18 @@
     toggleBtn.querySelector('use').setAttribute('href', auto ? '#i-pause' : '#i-play');
   }
 
+  // Vòng lặp vẽ chạy liên tục, nhưng vẫn vẽ lại ngay khi đổi thông số (kể cả khi phóng to khung hình).
+  ['turns', 'speed'].forEach(function (n) {
+    inputs[n].addEventListener('input', function () {
+      updateLabels();
+      draw();
+    });
+  });
   inputs.pos.addEventListener('input', function () {
     setAuto(false);
     magX = X_MIN + (X_MAX - X_MIN) * parseFloat(inputs.pos.value);
+    updateLabels();
+    draw();
   });
   poleInputs.forEach(function (el) {
     el.addEventListener('change', function () {
@@ -322,6 +372,7 @@
     setMag(X_MIN + (X_MAX - X_MIN) * 0.12);
     prevFlux = null;
     emf = 0;
+    emfPeak = 0;
   });
 
   canvas.style.touchAction = 'pan-y'; // vẫn cuộn trang theo chiều dọc, kéo ngang để di chuyển nam châm
