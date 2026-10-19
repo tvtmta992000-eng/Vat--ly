@@ -36,6 +36,16 @@ const SIMULATIONS = [
     applications: 'Xe lên dốc, băng chuyền hàng hoá, trượt patin, cầu trượt.',
   },
   {
+    key: 'forces',
+    category: 'co-hoc',
+    icon: 'incline',
+    title: 'Phân tích lực – 30 trường hợp',
+    description:
+      'Ba mươi tình huống phân tích lực kinh điển: ma sát, dây và ròng rọc, chuyển động tròn, hệ quy chiếu có gia tốc, cân bằng và momen, lò xo, lực đẩy Ác-si-mét và lực cản. Mỗi vectơ lực được vẽ theo đúng tỉ lệ độ lớn.',
+    params: ['Khối lượng, góc, hệ số ma sát', 'Lực kéo, lực căng, gia tốc', 'Bán kính, tốc độ', 'Độ cứng lò xo, khối lượng riêng'],
+    applications: 'Giải bài tập động lực học, kéo xe và đẩy thùng hàng, thang máy, xe vào cua, đòn bẩy, cân lò xo, tàu thuyền nổi trên nước.',
+  },
+  {
     key: 'pendulum',
     category: 'song-dao-dong',
     icon: 'pendulum',

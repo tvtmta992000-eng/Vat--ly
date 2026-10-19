@@ -1,0 +1,25 @@
+<div class="sim-controls">
+  <div class="field" style="margin:0">
+    <label for="forces-group">Nhóm tình huống</label>
+    <select id="forces-group" data-role="group">
+      <option value="0">1. Ma sát &amp; tiếp xúc</option>
+      <option value="1">2. Dây &amp; ròng rọc</option>
+      <option value="2">3. Chuyển động tròn</option>
+      <option value="3">4. Hệ quy chiếu có gia tốc</option>
+      <option value="4">5. Cân bằng &amp; momen</option>
+      <option value="5">6. Lò xo, lực đẩy Ác-si-mét &amp; lực cản</option>
+    </select>
+  </div>
+  <div class="field" style="margin:0">
+    <label for="forces-case">Trường hợp</label>
+    <select id="forces-case" data-role="case"></select>
+  </div>
+  <div class="preset-row">
+    <button type="button" class="chip-btn" data-action="prev" aria-label="Trường hợp trước">← Trước</button>
+    <button type="button" class="chip-btn" data-action="next" aria-label="Trường hợp sau">Sau →</button>
+  </div>
+</div>
+<div class="sim-controls" data-role="params" aria-live="off"></div>
+<dl class="sim-readout" data-role="readout"></dl>
+<p class="sim-note" data-role="note"></p>
+<%- include('../partials/sim-buttons', { label: 'Chạy' }) %>
